@@ -3,14 +3,28 @@
 import { api } from './core.js';
 
 const LS = 'anonup:';
-const PARALLEL = 3;
+const PARALLEL = ['slow-2g', '2g', '3g'].includes(navigator.connection?.effectiveType) ? 2 : 4;
+// أثناء الرفع: إبقاء شاشة الهاتف مضاءة (حتى لا يوقف النظام المتصفح) وتنبيه قبل إغلاق الصفحة
+const active = new Set(), IDLE = ['paused', 'done', 'error', 'canceled'];
+let lock = null, asking = false;
+async function keepAwake() {
+  if (lock || asking || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+  asking = true;
+  try { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => { lock = null; }); } catch { /* غير مدعوم */ } finally { asking = false; }
+}
+function track(u) {
+  if (u.state && !IDLE.includes(u.state)) active.add(u); else active.delete(u);
+  if (active.size) keepAwake(); else if (lock) { lock.release().catch(() => {}); lock = null; }
+}
+document.addEventListener('visibilitychange', () => { if (active.size && document.visibilityState === 'visible') keepAwake(); });
+addEventListener('beforeunload', (e) => { if (active.size) { e.preventDefault(); e.returnValue = ''; } });
 
 export class Uploader {
   constructor(file, meta, onChange) {
     Object.assign(this, { file, meta, onChange, state: 'idle', done: new Set(), xhrs: new Map(), loaded: new Map(), urls: new Map(), samples: [], retry: 0, speed: 0 });
     this.fp = LS + [meta.product_id, meta.lesson_id || '', file.name, file.size, file.lastModified].join('|');
   }
-  emit(state, info) { if (state) this.state = state; this.info = info; this.onChange(this); }
+  emit(state, info) { if (state) this.state = state; this.info = info; track(this); this.onChange(this); }
   get bytes() { let b = 0; for (const n of this.done) b += this.size(n); for (const v of this.loaded.values()) b += v; return Math.min(b, this.file.size); }
   get eta() { return this.speed > 0 ? (this.file.size - this.bytes) / this.speed : 0; }
   size(n) { return Math.min(this.ps, this.file.size - (n - 1) * this.ps); }

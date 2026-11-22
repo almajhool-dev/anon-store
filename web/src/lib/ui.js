@@ -38,7 +38,9 @@ export function richText(src = '') {
   const out = [];
   let list = null, code = null;
   const inline = (s) => s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-    .replace(/(https:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener nofollow ugc">$1</a>');
+    .replace(/!\[([^\]]*)\]\((https:\/\/[^\s)<]+)\)|(https:\/\/[^\s<]+)/g, (_, alt, src, u) => (src
+      ? `<img class="rt-img" src="${src}" alt="${alt}" loading="lazy" decoding="async">`
+      : `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`));
   for (const line of esc(src).split('\n')) {
     if (line.startsWith('```')) { if (code) { out.push(`<pre><code>${code.join('\n')}</code></pre>`); code = null; } else code = []; continue; }
     if (code) { code.push(line); continue; }

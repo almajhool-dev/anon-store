@@ -3,7 +3,8 @@ import { html, mount, actions, toast, busy, $, safeUrl, confirmBox } from '../li
 import { api, slugify } from '../lib/core.js';
 import { icon } from '../lib/art.js';
 import { getContent, SECTIONS, BRAND } from '../lib/content.js';
-import { uploadImage, IMAGE_ACCEPT } from '../lib/image.js';
+import { uploadImage, uploadVideo, insertAtCursor, IMAGE_ACCEPT, VIDEO_ACCEPT } from '../lib/image.js';
+import { showIntro } from '../lib/intro.js';
 
 const ICONS = ['shield', 'lock', 'play', 'cart', 'bolt', 'star', 'heart', 'gift', 'gem', 'code', 'terminal', 'phone', 'cap', 'folder', 'download', 'upload', 'chat', 'send', 'mail', 'eye', 'check', 'clock', 'chart', 'key', 'help', 'grid', 'trend', 'user', 'bell', 'music', 'list', 'disk'];
 const SHOW = { banners: 'البنرات الإعلانية', sections: 'بطاقات الأقسام', latest: 'أحدث المنتجات', top: 'الأكثر تحميلاً', features: 'المميزات', contact: 'قسم التواصل' };
@@ -30,7 +31,18 @@ function contentEditor(main, ctx) {
       <div class="field"><span>صورة المشاركة (تظهر عند إرسال رابط الموقع في واتساب وتيليجرام — يفضّل 1200×630)</span><div class="img-pick"><img src="${BRAND.share}?v=${v}" alt=""><label class="btn sm">${icon('upload')} تغيير الصورة<input type="file" accept="${IMAGE_ACCEPT}" data-brand="share" hidden></label></div></div>
       <p class="muted small">الشعار وأيقونة المتصفح والألوان والخلفية في تبويب «المظهر والإعدادات». هاتان الصورتان تُحفظان فوراً عند الرفع.</p></div>
 
-    <div class="card pad mt"><div class="row between wrap"><h3>${icon('star')} البنرات الإعلانية (أعلى الصفحة الرئيسية)</h3><button type="button" class="btn sm" data-act="add" data-list="banners">${icon('plus')} بنر جديد</button></div>
+    <div class="card pad mt"><h3>${icon('play')} شاشة الدخول المتحركة</h3>
+      <label class="switch"><input type="checkbox" data-path="intro.enabled" ${c.intro.enabled ? 'checked' : ''}> تفعيل شاشة دخول متحركة عند فتح الموقع</label>
+      <div class="field"><span>صورة أو GIF متحرك أو فيديو قصير MP4 (اتركه فارغاً ليظهر شعارك بحركة تلقائية)</span><div class="img-pick">${c.intro.media_url ? (c.intro.media_type === 'video' ? html`<video src="${safeUrl(c.intro.media_url)}" muted loop autoplay playsinline></video>` : html`<img src="${safeUrl(c.intro.media_url)}" alt="">`) : html`<span class="muted small">الشعار المتحرك</span>`}
+        <label class="btn sm">${icon('upload')} صورة/GIF<input type="file" accept="${IMAGE_ACCEPT}" data-img="intro.media_url" hidden></label>
+        <label class="btn sm">${icon('play')} فيديو<input type="file" accept="${VIDEO_ACCEPT}" data-vid="intro.media_url" hidden></label>
+        ${c.intro.media_url ? html`<button type="button" class="btn ghost sm" data-act="imgdel" data-path="intro.media_url">${icon('trash')} إزالة</button>` : ''}</div></div>
+      <div class="fgrid">${field('نص يظهر مع الحركة', 'intro.text', c.intro.text, { max: 80, ph: 'أهلاً بك في متجر المبرمج المجهول' })}
+        <label class="field"><span>مدة الظهور</span><select class="select" data-path="intro.duration">${[2, 3, 4, 5, 6].map((n) => html`<option value="${n}" ${Number(c.intro.duration) === n ? 'selected' : ''}>${n} ثوانٍ</option>`)}</select></label></div>
+      <div class="row wrap gap"><label class="switch"><input type="checkbox" data-path="intro.every_visit" ${c.intro.every_visit ? 'checked' : ''}> تظهر في كل مرة يفتح فيها الزائر الموقع</label>
+        <button type="button" class="btn ghost sm" data-act="intro">${icon('eye')} معاينة</button></div></div>
+
+    <div class="card pad mt"><div class="row between wrap"><h3>${icon('star')} البنرات الإعلانية (أعلى الصفحة الرئيسية — تتحرك تلقائياً إذا أكثر من واحد)</h3><button type="button" class="btn sm" data-act="add" data-list="banners">${icon('plus')} بنر جديد</button></div>
       ${c.banners.length ? c.banners.map((b, i) => html`<div class="upl">${imgField('صورة البنر', `banners.${i}.image_url`, b.image_url)}
         <div class="fgrid">${field('العنوان', `banners.${i}.title`, b.title, { max: 120 })}${field('نص الزر', `banners.${i}.button`, b.button, { max: 40, ph: 'اكتشف الآن' })}</div>
         ${field('النص', `banners.${i}.text`, b.text, { area: true })}${field('الرابط (صفحة داخلية مثل /p/اسم-المنتج أو رابط https)', `banners.${i}.link`, b.link, { ltr: true })}${listBtns('banners', i, c.banners.length)}</div>`)
@@ -62,7 +74,7 @@ function contentEditor(main, ctx) {
   main.addEventListener('input', (e) => {
     const p = e.target.dataset.path;
     if (!p) return;
-    set(c, p, e.target.type === 'checkbox' ? e.target.checked : p === 'hero.terminal' ? e.target.value.split('\n').map((x) => x.trimEnd().slice(0, 90)).filter(Boolean).slice(0, 8) : e.target.value);
+    set(c, p, e.target.type === 'checkbox' ? e.target.checked : p === 'hero.terminal' ? e.target.value.split('\n').map((x) => x.trimEnd().slice(0, 90)).filter(Boolean).slice(0, 8) : p === 'intro.duration' ? Number(e.target.value) : e.target.value);
   });
   main.addEventListener('change', async (e) => {
     const t = e.target;
@@ -71,11 +83,13 @@ function contentEditor(main, ctx) {
     try {
       toast('جارٍ رفع الصورة…');
       if (t.dataset.brand) { await uploadImage(t.files[0], { purpose: t.dataset.brand }); v = Date.now(); toast('تم تحديث الصورة ✅', 'ok'); }
-      else { set(c, t.dataset.img, await uploadImage(t.files[0])); toast('تم الرفع — اضغط «حفظ كل التغييرات»', 'ok'); }
+      else if (t.dataset.vid) { set(c, t.dataset.vid, await uploadVideo(t.files[0])); if (t.dataset.vid === 'intro.media_url') c.intro.media_type = 'video'; toast('تم رفع الفيديو — اضغط «حفظ كل التغييرات»', 'ok'); }
+      else { set(c, t.dataset.img, await uploadImage(t.files[0])); if (t.dataset.img === 'intro.media_url') c.intro.media_type = 'image'; toast('تم الرفع — اضغط «حفظ كل التغييرات»', 'ok'); }
       draw();
     } catch (er) { toast(er.message, 'error'); }
   });
   actions(main, {
+    intro: () => showIntro(c.intro, ctx.state.settings.site, { force: true }),
     imgdel: (b) => { set(c, b.dataset.path, null); draw(); },
     add: (b) => { c[b.dataset.list].push(b.dataset.list === 'banners' ? { image_url: null, title: 'عنوان البنر', text: '', button: '', link: '' } : { icon: 'star', title: 'ميزة جديدة', text: '' }); draw(); },
     del: async (b) => { if (await confirmBox('حذف هذا العنصر؟', { danger: true, ok: 'حذف' })) { c[b.dataset.list].splice(Number(b.dataset.i), 1); draw(); } },
@@ -96,7 +110,7 @@ function pagesEditor(main, ctx) {
   const draw = () => mount(main, html`<h2>الصفحات والروابط</h2><p class="muted small">أنشئ صفحات مثل «من نحن» و«الشروط» و«سياسة الخصوصية»، أو أضف روابط لأي مكان، واختر ظهورها في القائمة العلوية أو الفوتر.</p>
     ${pages.map((p, i) => html`<div class="card pad mt"><div class="fgrid">${field('العنوان', `${i}.title`, p.title, { max: 80 })}${field('الرابط المختصر (إنجليزي)', `${i}.slug`, p.slug, { max: 40, ltr: true })}</div>
       ${field('رابط بدل المحتوى (اختياري — اتركه فارغاً لصفحة نصية)', `${i}.url`, p.url, { ltr: true, ph: 'https://... أو /courses' })}
-      ${p.url ? '' : field('محتوى الصفحة (يدعم ## عنوان، - نقطة، **غامق**، وروابط https)', `${i}.body`, p.body, { area: true, max: 20000 })}
+      ${p.url ? '' : field('محتوى الصفحة (يدعم ## عنوان، - نقطة، **غامق**، روابط https، وصور/GIF بزر الإدراج)', `${i}.body`, p.body, { area: true, max: 20000 })}${p.url ? '' : html`<label class="btn ghost sm">${icon('upload')} إدراج صورة أو GIF<input type="file" accept="${IMAGE_ACCEPT}" data-ins="${i}" hidden></label>`}
       <div class="row wrap gap"><label class="switch"><input type="checkbox" data-path="${i}.in_nav" ${p.in_nav ? 'checked' : ''}> في القائمة العلوية</label><label class="switch"><input type="checkbox" data-path="${i}.in_footer" ${p.in_footer !== false ? 'checked' : ''}> في الفوتر</label>
       ${p.url ? '' : html`<a class="btn ghost sm" href="/page/${p.slug}" target="_blank" rel="noopener">${icon('eye')} معاينة</a>`}</div>${listBtns('pages', i, pages.length)}</div>`)}
     <div class="row gap mt"><button class="btn" data-act="add">${icon('plus')} صفحة أو رابط جديد</button></div>
@@ -110,6 +124,12 @@ function pagesEditor(main, ctx) {
     if (k === 'slug') pages[i]._slugTouched = true;
   });
   main.addEventListener('change', (e) => { const p = e.target.dataset.path; if (p && e.target.type === 'checkbox') { const [i, k] = p.split('.'); pages[i][k] = e.target.checked; } });
+  main.addEventListener('change', async (e) => {
+    const t = e.target;
+    if (t.dataset.ins == null || !t.files?.length) return;
+    try { toast('جارٍ رفع الصورة…'); const url = await uploadImage(t.files[0]); const ta = main.querySelector(`[data-path="${t.dataset.ins}.body"]`); if (ta) insertAtCursor(ta, `\n![](${url})\n`); toast('تمت إضافة الصورة — اضغط «حفظ الصفحات»', 'ok'); } catch (er) { toast(er.message, 'error'); }
+    t.value = '';
+  });
   actions(main, {
     add: () => { pages.push({ title: 'صفحة جديدة', slug: 'page-' + Math.random().toString(36).slice(2, 6), body: '', url: '', in_nav: false, in_footer: true }); draw(); },
     del: async (b) => { if (await confirmBox('حذف هذه الصفحة؟', { danger: true, ok: 'حذف' })) { pages.splice(Number(b.dataset.i), 1); draw(); } },

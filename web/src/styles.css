@@ -299,3 +299,21 @@ details summary::before { content: '+'; color: var(--primary); font-weight: 900;
 .img-pick img.sq { width: 72px; height: 72px; border-radius: 16px; }
 .savebar { position: sticky; bottom: 0; z-index: 5; padding: 12px 0; margin-top: 16px; background: linear-gradient(0deg, var(--bg) 70%, transparent); }
 @media (max-width: 700px) { .banner-ad:has(img) { grid-template-columns: 1fr; } .banner-ad img { max-height: 200px; } }
+
+/* فيديو الخلفية، صور المحتوى، سلايدر البنرات، شاشة الدخول المتحركة */
+#bgv { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; pointer-events: none; opacity: .45; }
+.img-pick video { width: 120px; height: 72px; object-fit: cover; border-radius: 12px; }
+.rt-img { display: block; max-width: 100%; height: auto; margin: 12px auto; border-radius: 14px; }
+.banners.slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.banners.slider::-webkit-scrollbar { display: none; }
+.banners.slider > .banner-ad { flex: 0 0 100%; scroll-snap-align: center; }
+.intro { position: fixed; inset: 0; z-index: 9999; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 24px; background: var(--bg); cursor: pointer; transition: opacity .45s ease, visibility .45s; }
+.intro.out { opacity: 0; visibility: hidden; }
+.intro > img, .intro > video { max-width: min(86vw, 560px); max-height: 62vh; object-fit: contain; border-radius: 18px; animation: introUp .7s ease both; }
+.intro-logo { width: 150px; height: 150px; animation: introPop 1s cubic-bezier(.2, .9, .3, 1.25) both, introGlow 1.6s ease-in-out .6s infinite alternate; }
+.intro-logo svg, .intro-logo img { width: 100%; height: 100%; object-fit: contain; }
+.intro-text { margin: 0; text-align: center; font-size: clamp(1.25rem, 4.5vw, 2rem); font-weight: 800; background: linear-gradient(90deg, var(--primary), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; animation: introUp .8s .3s ease both; }
+.intro-skip { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); font-size: .85rem; color: var(--muted); }
+@keyframes introPop { from { opacity: 0; transform: scale(.35) rotate(-14deg); } to { opacity: 1; transform: none; } }
+@keyframes introGlow { from { filter: drop-shadow(0 0 6px var(--primary)); } to { filter: drop-shadow(0 0 28px var(--accent)); } }
+@keyframes introUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }

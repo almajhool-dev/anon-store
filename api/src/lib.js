@@ -193,6 +193,9 @@ export const EXT = {
   rar: 'rar', '7z': '7z', gz: 'gz', tgz: 'gz', tar: 'tar', pdf: 'pdf',
   mp4: 'mp4', m4v: 'mp4', mov: 'mp4', mkv: 'mkv', webm: 'mkv', mp3: 'mp3', wav: 'wav',
   exe: 'mz', msi: 'ole', doc: 'ole', xls: 'ole', ppt: 'ole', deb: 'ar', iso: 'any', img: 'any', bin: 'any',
+  whl: 'zip', ipa: 'zip', apkm: 'zip', epub: 'zip', xz: 'xz', txz: 'xz', bz2: 'bz2', tbz2: 'bz2', zst: 'zst', appimage: 'elf', so: 'elf',
+  yml: 'text', yaml: 'text', toml: 'text', ini: 'text', cfg: 'text', sql: 'text', bat: 'text', ps1: 'text', log: 'text',
+  m4a: 'mp4', ogg: 'ogg', flac: 'flac', dmg: 'any', obb: 'any',
 };
 const at = (b, s, e) => String.fromCharCode(...b.slice(s, e));
 const SIG = {
@@ -209,6 +212,12 @@ const SIG = {
   mz: (b) => b[0] === 0x4d && b[1] === 0x5a,
   ole: (b) => b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0,
   ar: (b) => at(b, 0, 7) === '!<arch>',
+  xz: (b) => b[0] === 0xfd && at(b, 1, 5) === '7zXZ',
+  bz2: (b) => at(b, 0, 3) === 'BZh',
+  zst: (b) => b[0] === 0x28 && b[1] === 0xb5 && b[2] === 0x2f && b[3] === 0xfd,
+  elf: (b) => b[0] === 0x7f && at(b, 1, 4) === 'ELF',
+  ogg: (b) => at(b, 0, 4) === 'OggS',
+  flac: (b) => at(b, 0, 4) === 'fLaC',
   text: (b) => !b.includes(0),
   any: () => true,
 };

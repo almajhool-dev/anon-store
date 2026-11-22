@@ -11,6 +11,7 @@ const EXTRA = {
   latest: ['أحدث المنتجات', 'آخر ما أُضيف للمتجر'], top: ['الأكثر تحميلاً', 'الأكثر طلباً من المستخدمين'],
 };
 export const DEFAULT_CONTENT = {
+  intro: { enabled: false, media_type: 'image', media_url: null, text: '', duration: 3, every_visit: false },
   hero: {
     badge: 'متجر المبرمج المجهول', title: 'أدوات وتطبيقات وكورسات', highlight: 'للمبرمجين وعشاق الأمن السيبراني', subtitle: '',
     cta1_text: 'تصفّح المتجر', cta1_link: '/latest', cta2_text: 'المنتجات المجانية', cta2_link: '/free', image_url: null, show_terminal: true,
@@ -40,6 +41,7 @@ export function getContent(state) {
     show: { ...DEFAULT_CONTENT.show, ...(c.show || {}) },
     contact: merge(DEFAULT_CONTENT.contact, c.contact),
     footer: merge(DEFAULT_CONTENT.footer, c.footer),
+    intro: merge(DEFAULT_CONTENT.intro, c.intro),
   };
 }
 export const BRAND = {

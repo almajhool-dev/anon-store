@@ -247,6 +247,32 @@ ok('audit log records admin actions', (await api('/admin/audit', { token: admin.
   ok('media: normal user cannot upload images', (await api('/admin/media', { method: 'POST', token: user.token, body: { mime: 'image/png', size: 10 }, ip: '198.51.100.23' })).status === 403);
   const st = await api('/admin/stats', { token: admin.token });
   ok('stats: visitor totals present', ['visitors_30d', 'visits_total', 'pageviews_total'].every((k) => typeof st.data?.[k] === 'number'), JSON.stringify(st.data).slice(0, 200));
+  // --- وسائط متحركة/فيديو، خلفيات، شاشة الدخول، أنواع ملفات جديدة ---
+  const vid = await api('/admin/media', { method: 'POST', token: admin.token, body: { mime: 'video/mp4', size: 30 * 1024 * 1024 } });
+  ok('media: background/intro video (30MB mp4) allowed', vid.status === 200 && vid.data.public_url.includes('/vid/'), JSON.stringify(vid.data).slice(0, 120));
+  ok('media: video over 40MB rejected', (await api('/admin/media', { method: 'POST', token: admin.token, body: { mime: 'video/mp4', size: 41 * 1024 * 1024 } })).status === 400);
+  ok('media: unknown video type rejected', (await api('/admin/media', { method: 'POST', token: admin.token, body: { mime: 'video/x-msvideo', size: 1000 } })).status === 400);
+  ok('media: animated GIF up to 15MB allowed', (await api('/admin/media', { method: 'POST', token: admin.token, body: { mime: 'image/gif', size: 12 * 1024 * 1024 } })).status === 200);
+  const site0 = (await api('/settings')).data.site;
+  const own = vid.data.public_url;
+  const putSite = (x) => api('/admin/settings/site', { method: 'PUT', token: admin.token, body: { value: { ...site0, ...x } } });
+  ok('site: matrix animated background accepted', (await putSite({ background: 'matrix' })).data?.value?.background === 'matrix');
+  ok('site: external background video rejected (CSP-safe)', (await putSite({ background: 'video', background_video_url: 'https://evil.example/v.mp4' })).status === 400);
+  const vs = await putSite({ background: 'video', background_video_url: own });
+  ok('site: own-storage background video accepted', vs.status === 200 && vs.data.value.background_video_url === own, JSON.stringify(vs.data).slice(0, 160));
+  await putSite({});
+  const intro = (x) => api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, intro: { enabled: true, text: 'أهلاً', duration: 3, ...x } } } });
+  ok('intro: animated GIF intro accepted', (await intro({ media_type: 'image', media_url: 'https://example.com/a.gif' })).data?.value?.intro?.enabled === true);
+  ok('intro: external intro video rejected', (await intro({ media_type: 'video', media_url: 'https://evil.example/v.mp4' })).status === 400);
+  ok('intro: own-storage intro video accepted', (await intro({ media_type: 'video', media_url: own })).data?.value?.intro?.media_type === 'video');
+  ok('intro: duration out of range rejected', (await intro({ duration: 30 })).status === 400);
+  const xz = Buffer.concat([Buffer.from([0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00]), Buffer.alloc(4000, 1)]);
+  const upXz = await upload(admin.token, free.data.id, 'system.tar.xz', xz);
+  ok('upload: complete system archive (.tar.xz) accepted + scanned', upXz.done?.status === 200 && upXz.done?.data?.scan?.status !== 'flagged', JSON.stringify(upXz.done?.data || upXz.init?.data).slice(0, 160));
+  const ipa = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.alloc(3000, 2)]);
+  ok('upload: iOS .ipa accepted', (await upload(admin.token, free.data.id, 'app.ipa', ipa)).done?.status === 200);
+  const dl = await api(`/download/${free.data.id}`, { method: 'POST', body: {} });
+  ok('download link valid ≥15 min (longer for big files)', dl.status === 200 && dl.data.expires_in >= 900, JSON.stringify(dl.data).slice(0, 120));
   if (LOCAL) {
     ok('honeypot path form → 404', (await api('/trap/wp-admin/setup.php', { ip: '203.0.113.77' })).status === 404);
     const [ev] = await owner.query(`select * from security_events order by created_at desc limit 1`);

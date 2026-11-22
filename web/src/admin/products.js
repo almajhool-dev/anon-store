@@ -5,10 +5,9 @@ import { icon } from '../lib/art.js';
 import { loader, empty, cover } from '../lib/ui.js';
 import { Uploader, pendingUploads, forgetUpload } from '../lib/uploader.js';
 import { table } from './admin.js';
-import { uploadImage, IMAGE_ACCEPT } from '../lib/image.js';
+import { uploadImage, insertAtCursor, IMAGE_ACCEPT } from '../lib/image.js';
 
 const ST = { draft: ['مسودة', ''], published: ['منشور', 'ok'], hidden: ['مخفي', 'warn'] };
-const ACCEPT = '.py,.pyw,.ipynb,.txt,.md,.json,.csv,.sh,.zip,.apk,.aab,.xapk,.apks,.jar,.docx,.xlsx,.pptx,.rar,.7z,.gz,.tgz,.tar,.pdf,.mp4,.m4v,.mov,.mkv,.webm,.mp3,.wav,.exe,.msi,.doc,.xls,.ppt,.deb,.iso,.img,.bin';
 const STATE_TXT = { preparing: 'تحضير…', uploading: 'جارٍ الرفع', paused: 'متوقف مؤقتاً', offline: 'بانتظار عودة الإنترنت…', retrying: 'إعادة المحاولة', completing: 'تجميع وفحص الملف…', done: 'اكتمل ✅', error: 'خطأ', canceled: 'أُلغي' };
 const active = new Map();
 
@@ -51,7 +50,7 @@ async function editor(main, ctx, id) {
         <label class="field"><span>القسم</span><select class="select" name="kind">${Object.entries(KINDS).map(([k, v]) => html`<option value="${k}" ${p.kind === k ? 'selected' : ''}>${v.label}</option>`)}</select></label>
         <label class="field"><span>الحالة</span><select class="select" name="status">${Object.entries(ST).map(([k, v]) => html`<option value="${k}" ${p.status === k ? 'selected' : ''}>${v[0]}</option>`)}</select></label></div>
       <label class="field"><span>وصف قصير</span><input class="input" name="summary" maxlength="400" value="${p.summary}"></label>
-      <label class="field"><span>الوصف الكامل</span><textarea class="input" name="description" rows="8" maxlength="20000">${p.description}</textarea><small>يدعم: ## عنوان، - نقطة، \`كود\`، **غامق**، وروابط https</small></label>
+      <label class="field"><span>الوصف الكامل</span><textarea class="input" name="description" rows="8" maxlength="20000">${p.description}</textarea><small>يدعم: ## عنوان، - نقطة، \`كود\`، **غامق**، روابط https، وصور/GIF بزر الإدراج</small></label><label class="btn ghost sm">${icon('upload')} إدراج صورة أو GIF في الوصف<input type="file" accept="${IMAGE_ACCEPT}" data-ins="description" hidden></label>
       <div class="fgrid"><label class="field"><span>السعر (0 = مجاني)</span><input class="input ltr" name="price" type="number" min="0" step="0.01" value="${p.price}"></label>
         <label class="field"><span>العملة</span><select class="select" name="currency"><option value="USD" ${p.currency === 'USD' ? 'selected' : ''}>دولار USD</option><option value="IQD" ${p.currency === 'IQD' ? 'selected' : ''}>دينار عراقي IQD</option></select></label>
         <label class="field"><span>نسبة الخصم %</span><input class="input ltr" name="discount_percent" type="number" min="0" max="95" value="${p.discount_percent}"></label>
@@ -69,7 +68,7 @@ async function editor(main, ctx, id) {
     <div class="card pad mt"><h3>${icon('upload')} ${media ? 'ملفات مرفقة (اختياري)' : 'ملفات المنتج والإصدارات'}</h3>
       <p class="muted small">رفع مجزأ مباشر للتخزين: إيقاف/استكمال، استكمال تلقائي بعد انقطاع الإنترنت، ودون أي ضغط. حتى 10GB للملف. عند إعادة تحميل الصفحة أعد اختيار نفس الملف ليكمل من حيث توقف.</p>
       <div class="fgrid"><label class="field"><span>رقم إصدار الملف</span><input class="input ltr" id="upver" placeholder="${p.version}"></label><label class="field"><span>ملاحظات التحديث</span><input class="input" id="upnotes" maxlength="4000" placeholder="ما الجديد في هذا الإصدار؟"></label></div>
-      <label class="drop" id="drop">${icon('upload')}<p><b>اسحب الملفات هنا أو اضغط للاختيار</b></p><p class="muted small">Python, APK, ZIP, RAR, 7Z, PDF, DOCX, XLSX, MP4, MOV, MKV ...</p><input type="file" multiple accept="${ACCEPT}" data-up="product"></label>
+      <label class="drop" id="drop">${icon('upload')}<p><b>اسحب الملفات هنا أو اضغط للاختيار</b></p><p class="muted small">Python, APK, ZIP, RAR, 7Z, PDF, DOCX, XLSX, MP4, MOV, MKV ...</p><input type="file" multiple data-up="product"></label>
       ${pend.length ? html`<div class="mt">${pend.map((u) => html`<div class="upl"><div class="row between"><span><b class="ltr">${u.name}</b> <span class="muted small">(${fmtBytes(u.size)})</span> — رفع غير مكتمل${u.lesson ? ' (فيديو درس)' : ''}</span><span class="row"><span class="small muted">أعد اختيار نفس الملف للاستكمال</span><button class="btn ghost sm" data-act="forget" data-k="${u.key}" data-id="${u.id}">إلغاء نهائي</button></span></div></div>`)}</div>` : ''}
       <div id="ups"></div>
       ${files.filter((f) => f.purpose === 'product').length ? html`<h4 class="mt">الملفات المرفوعة</h4>${table(['الملف', 'الإصدار', 'الحجم', 'الفحص', '', 'التاريخ', ''], files.filter((f) => f.purpose === 'product').map((f) => html`<tr>
@@ -143,6 +142,10 @@ async function editor(main, ctx, id) {
     });
     form.querySelector('[name=title]').addEventListener('input', (e) => { const s = form.querySelector('[name=slug]'); if (!id && !s.dataset.touched) s.value = slugify(e.target.value); });
     form.querySelector('[name=slug]').addEventListener('input', (e) => { e.target.dataset.touched = '1'; });
+    main.querySelectorAll('[data-ins]').forEach((inp) => inp.addEventListener('change', async () => {
+      try { toast('جارٍ رفع الصورة…'); const url = await uploadImage(inp.files[0]); insertAtCursor(form.querySelector('[name=description]'), `\n![](${url})\n`); toast('تمت إضافة الصورة للوصف — احفظ التغييرات', 'ok'); } catch (er) { toast(er.message, 'error'); }
+      inp.value = '';
+    }));
     main.querySelectorAll('[data-img]').forEach((inp) => inp.addEventListener('change', async () => {
       const list = [...inp.files];
       try {

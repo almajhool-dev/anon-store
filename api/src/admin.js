@@ -12,6 +12,8 @@ const bigId = (v) => int(v, 1, Number.MAX_SAFE_INTEGER, 'id');
 const hex = (v) => (/^#[0-9a-f]{6}$/i.test(v || '') ? v : fail(400, 'invalid_color'));
 const bool = (v) => v === true;
 const txt = (v, max, name = 'text') => str(v ?? '', max, { name });
+// الفيديو يُعرض فقط من تخزيننا (سياسة CSP: media-src)
+const ownMedia = (v, name) => { const u = httpsUrl(v, name); if (u && !u.startsWith(storage.mediaUrl(''))) fail(400, 'invalid_' + name); return u; };
 const link = (v) => {
   if (!v) return null;
   v = str(v, 300, { name: 'link' });
@@ -62,8 +64,8 @@ function settingInput(key, v) {
       tagline: str(v.tagline ?? '', 220, { name: 'tagline' }),
       colors: { primary: hex(v.colors?.primary), accent: hex(v.colors?.accent), bg: hex(v.colors?.bg) },
       font: ['Cairo', 'Tajawal', 'system'].includes(v.font) ? v.font : 'Cairo',
-      background: ['network', 'grid', 'image', 'plain'].includes(v.background) ? v.background : 'network',
-      background_url: httpsUrl(v.background_url, 'background_url'), logo_url: httpsUrl(v.logo_url, 'logo_url'),
+      background: ['network', 'matrix', 'grid', 'image', 'video', 'plain'].includes(v.background) ? v.background : 'network',
+      background_url: httpsUrl(v.background_url, 'background_url'), background_video_url: ownMedia(v.background_video_url, 'background_video_url'), logo_url: httpsUrl(v.logo_url, 'logo_url'),
       favicon_url: httpsUrl(v.favicon_url, 'favicon_url'), announcement: str(v.announcement ?? '', 300, { name: 'announcement' }),
       registration_enabled: v.registration_enabled !== false, store_enabled: v.store_enabled !== false,
       sections: Object.fromEntries(KINDS.map((k) => [k, s[k] !== false])),
@@ -95,6 +97,9 @@ function settingInput(key, v) {
       show: Object.fromEntries(['banners', 'sections', 'latest', 'top', 'features', 'contact'].map((k) => [k, show[k] !== false])),
       contact: { title: txt(v.contact?.title, 80), text: txt(v.contact?.text, 300) },
       footer: { text: txt(v.footer?.text, 200), about: txt(v.footer?.about, 400) },
+      intro: { enabled: v.intro?.enabled === true, media_type: v.intro?.media_type === 'video' ? 'video' : 'image',
+        media_url: v.intro?.media_type === 'video' ? ownMedia(v.intro?.media_url, 'intro_media') : httpsUrl(v.intro?.media_url, 'intro_media'),
+        text: txt(v.intro?.text, 80), duration: int(v.intro?.duration ?? 3, 1, 8, 'duration'), every_visit: v.intro?.every_visit === true },
       version: Date.now(),
     };
   }
@@ -325,14 +330,16 @@ export default function (add) {
   });
 
   add('POST', '/admin/media', 'admin', async (c) => {
-    const MAP = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/x-icon': 'ico', 'image/vnd.microsoft.icon': 'ico' };
+    const MAP = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/x-icon': 'ico', 'image/vnd.microsoft.icon': 'ico', 'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov' };
     const type = c.body?.mime;
     if (!MAP[type]) fail(400, 'image_type_not_allowed');
-    const size = int(c.body?.size, 1, 8 * 1024 * 1024, 'size');
+    const video = type.startsWith('video/');
+    // صور متحركة (GIF/WebP) حتى 15MB، وفيديو الخلفية/شاشة الدخول حتى 40MB
+    const size = int(c.body?.size, 1, (video ? 40 : 15) * 1024 * 1024, 'size');
     // صور الهوية الثابتة (أيقونة الهاتف وصورة المشاركة) لها مسار ثابت تشير إليه index.html
     const brand = { app_icon: 'brand/app-icon', share: 'brand/share' }[c.body?.purpose];
     if (brand && !['image/png', 'image/jpeg', 'image/webp'].includes(type)) fail(400, 'image_type_not_allowed');
-    const key = brand || `img/${new Date().toISOString().slice(0, 7)}/${randomUUID()}.${MAP[type]}`;
+    const key = brand || `${video ? 'vid' : 'img'}/${new Date().toISOString().slice(0, 7)}/${randomUUID()}.${MAP[type]}`;
     await c.db.tx([audit(c, 'media.upload', key, { size, type })]);
     return { upload_url: await storage.signMediaPut(key, type, size), public_url: storage.mediaUrl(key) + (brand ? `?v=${Date.now()}` : ''), headers: { 'content-type': type } };
   }, { rl: ['media', 30] });

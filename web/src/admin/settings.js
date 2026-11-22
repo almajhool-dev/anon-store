@@ -2,7 +2,7 @@
 import { html, mount, actions, toast, busy, $, safeUrl } from '../lib/dom.js';
 import { api, KINDS } from '../lib/core.js';
 import { icon } from '../lib/art.js';
-import { uploadImage, IMAGE_ACCEPT } from '../lib/image.js';
+import { uploadImage, uploadVideo, IMAGE_ACCEPT, VIDEO_ACCEPT } from '../lib/image.js';
 
 export default async function (main, ctx) {
   const st = ctx.state.settings;
@@ -10,6 +10,9 @@ export default async function (main, ctx) {
   const sw = (name, on, label) => html`<label class="switch"><input type="checkbox" name="${name}" ${on ? 'checked' : ''}> ${label}</label>`;
   const imgField = (key, label) => html`<div class="field"><span>${label}</span><div class="img-pick">${site[key] ? html`<img src="${safeUrl(site[key])}" alt="">` : ''}
     <label class="btn sm">${icon('upload')} رفع<input type="file" accept="${IMAGE_ACCEPT}" data-img="${key}" hidden></label>
+    <input class="input ltr grow" name="${key}" value="${site[key] || ''}" placeholder="https://..."></div></div>`;
+  const vidField = (key, label) => html`<div class="field"><span>${label}</span><div class="img-pick">${site[key] ? html`<video src="${safeUrl(site[key])}" muted loop autoplay playsinline></video>` : ''}
+    <label class="btn sm">${icon('upload')} رفع فيديو<input type="file" accept="${VIDEO_ACCEPT}" data-vid="${key}" hidden></label>
     <input class="input ltr grow" name="${key}" value="${site[key] || ''}" placeholder="https://..."></div></div>`;
 
   function render() {
@@ -22,9 +25,9 @@ export default async function (main, ctx) {
       <div class="fgrid"><label class="field"><span>اللون الأساسي</span><input type="color" name="primary" value="${site.colors.primary}"></label><label class="field"><span>اللون الثانوي</span><input type="color" name="accent" value="${site.colors.accent}"></label>
         <label class="field"><span>لون الخلفية</span><input type="color" name="bg" value="${site.colors.bg}"></label>
         <label class="field"><span>الخط</span><select class="select" name="font">${[['Cairo', 'Cairo'], ['Tajawal', 'Tajawal'], ['system', 'خط النظام']].map(([v, t]) => html`<option value="${v}" ${site.font === v ? 'selected' : ''}>${t}</option>`)}</select></label>
-        <label class="field"><span>الخلفية</span><select class="select" name="background">${[['network', 'شبكة رقمية متحركة'], ['grid', 'شبكة ثابتة'], ['image', 'صورة'], ['plain', 'سادة']].map(([v, t]) => html`<option value="${v}" ${site.background === v ? 'selected' : ''}>${t}</option>`)}</select></label>
+        <label class="field"><span>الخلفية</span><select class="select" name="background">${[['network', 'شبكة رقمية متحركة'], ['matrix', 'مطر رقمي متحرك (ماتريكس)'], ['grid', 'شبكة ثابتة'], ['image', 'صورة أو GIF متحرك'], ['video', 'فيديو متحرك (MP4)'], ['plain', 'سادة']].map(([v, t]) => html`<option value="${v}" ${site.background === v ? 'selected' : ''}>${t}</option>`)}</select></label>
         <label class="field"><span>العملة الافتراضية</span><select class="select" name="currency"><option value="USD" ${site.currency === 'USD' ? 'selected' : ''}>USD</option><option value="IQD" ${site.currency === 'IQD' ? 'selected' : ''}>IQD</option></select></label></div>
-      ${imgField('logo_url', 'الشعار (يفضّل PNG شفاف مربع)')}${imgField('favicon_url', 'أيقونة المتصفح (Favicon)')}${imgField('background_url', 'صورة الخلفية (عند اختيار "صورة")')}
+      ${imgField('logo_url', 'الشعار (يفضّل PNG شفاف مربع)')}${imgField('favicon_url', 'أيقونة المتصفح (Favicon)')}${imgField('background_url', 'صورة الخلفية أو GIF متحرك (عند اختيار "صورة أو GIF")')}${vidField('background_video_url', 'فيديو الخلفية — MP4 قصير حتى 40MB (عند اختيار "فيديو متحرك")')}
       <h3 class="mt">التحكم بالأقسام والتشغيل</h3><div class="row wrap gap">${Object.entries(KINDS).map(([k, v]) => sw('sec_' + k, site.sections?.[k] !== false, v.plural))}</div>
       <div class="row wrap gap">${sw('registration_enabled', site.registration_enabled !== false, 'السماح بتسجيل حسابات جديدة')}${sw('store_enabled', site.store_enabled !== false, 'تفعيل المتجر (الشراء)')}</div>
       <div class="row gap mt"><button class="btn primary">${icon('check')} حفظ المظهر</button><button type="button" class="btn ghost" data-act="preview">معاينة الألوان</button></div></form>
@@ -57,7 +60,7 @@ export default async function (main, ctx) {
   const readSite = (f) => {
     const d = Object.fromEntries(new FormData(f));
     return { ...site, name: d.name, name_en: d.name_en, tagline: d.tagline, announcement: d.announcement, font: d.font, background: d.background, currency: d.currency,
-      colors: { primary: d.primary, accent: d.accent, bg: d.bg }, logo_url: d.logo_url || null, favicon_url: d.favicon_url || null, background_url: d.background_url || null,
+      colors: { primary: d.primary, accent: d.accent, bg: d.bg }, logo_url: d.logo_url || null, favicon_url: d.favicon_url || null, background_url: d.background_url || null, background_video_url: d.background_video_url || null,
       sections: Object.fromEntries(Object.keys(KINDS).map((k) => [k, !!d['sec_' + k]])), registration_enabled: !!d.registration_enabled, store_enabled: !!d.store_enabled };
   };
 
@@ -66,6 +69,9 @@ export default async function (main, ctx) {
     sf.addEventListener('submit', (e) => { e.preventDefault(); Object.assign(site, readSite(sf)); save('site', site, sf.querySelector('.btn.primary')); });
     main.querySelectorAll('[data-img]').forEach((inp) => inp.addEventListener('change', async () => {
       try { toast('جارٍ رفع الصورة…'); const k = inp.dataset.img, url = await uploadImage(inp.files[0], k === 'favicon_url' ? { max: 256, type: 'image/png' } : { max: k === 'logo_url' ? 1024 : 1920 }); Object.assign(site, readSite(sf), { [inp.dataset.img]: url }); render(); toast('تم الرفع — اضغط حفظ المظهر', 'ok'); } catch (e) { toast(e.message, 'error'); }
+    }));
+    main.querySelectorAll('[data-vid]').forEach((inp) => inp.addEventListener('change', async () => {
+      try { toast('جارٍ رفع الفيديو…'); const url = await uploadVideo(inp.files[0]); Object.assign(site, readSite(sf), { [inp.dataset.vid]: url }); render(); toast('تم الرفع — اختر "فيديو متحرك" ثم احفظ المظهر', 'ok'); } catch (er) { toast(er.message, 'error'); }
     }));
     $('#social', main).addEventListener('submit', (e) => {
       e.preventDefault();

@@ -15,7 +15,7 @@ export default async function (view, _m, { state, setTitle }) {
   const cats = Object.keys(SECTIONS).filter((k) => sec[k] !== false);
   const heroImg = h.image_url || s.logo_url;
   mount(view, html`
-  ${c.show.banners && c.banners.length ? html`<section class="container section banners">${c.banners.map((b) => html`<div class="card banner-ad reveal">
+  ${c.show.banners && c.banners.length ? html`<section class="container section banners${c.banners.length > 1 ? ' slider' : ''}">${c.banners.map((b) => html`<div class="card banner-ad reveal">
     ${b.image_url ? html`<img src="${safeUrl(b.image_url)}" alt="" loading="lazy">` : ''}<div><h2>${b.title}</h2>${b.text ? html`<p>${b.text}</p>` : ''}${b.link ? btnLink(b.link, 'btn primary', b.button || 'اكتشف الآن') : ''}</div></div>`)}</section>` : ''}
   <section class="container hero">
     <div class="reveal">
@@ -55,5 +55,14 @@ export default async function (view, _m, { state, setTitle }) {
   actions(view, { reload: () => { load('latest', 'sort=latest'); load('top', 'sort=top'); } });
   load('latest', 'sort=latest');
   load('top', 'sort=top');
-  return () => { alive = false; };
+  const sl = view.querySelector('.banners.slider');
+  let slideT = 0;
+  if (sl && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    slideT = setInterval(() => {
+      const x = Math.abs(sl.scrollLeft), w = sl.clientWidth, end = x + w >= sl.scrollWidth - 8;
+      sl.scrollTo({ left: (end ? 0 : x + w) * (getComputedStyle(sl).direction === 'rtl' ? -1 : 1), behavior: 'smooth' });
+    }, 5000);
+    sl.addEventListener('pointerdown', () => clearInterval(slideT), { once: true });
+  }
+  return () => { alive = false; clearInterval(slideT); };
 }

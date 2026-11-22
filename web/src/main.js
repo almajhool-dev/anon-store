@@ -8,6 +8,7 @@ import { api, auth, KINDS } from './lib/core.js';
 import { icon, logo } from './lib/art.js';
 import { startFx, setFxTheme, reveal, autoReveal } from './lib/fx.js';
 import { getContent, SECTIONS } from './lib/content.js';
+import { showIntro } from './lib/intro.js';
 
 export const state = { settings: null, me: null, unread: 0 };
 const DEFAULT_SITE = { name: 'متجر المبرمج المجهول', name_en: 'Anonymous Programmer Store', tagline: '', colors: { primary: '#18b4ff', accent: '#8b5cf6', bg: '#05060b' }, sections: {}, registration_enabled: true, store_enabled: true, currency: 'USD' };
@@ -23,6 +24,21 @@ const ROUTES = [
   [/^\/admin(?:\/([a-z]+))?$/, () => import('./admin/admin.js')],
 ];
 
+// فيديو خلفية متحرك (يُتجاوز عند تفعيل "تقليل الحركة" أو "توفير البيانات" في الهاتف)
+function bgVideo(src) {
+  let v = document.getElementById('bgv');
+  if (!src || matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) { v?.remove(); return; }
+  if (!v) {
+    v = document.createElement('video');
+    v.id = 'bgv'; v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+    document.body.prepend(v);
+  }
+  const u = safeUrl(src);
+  if (v.getAttribute('src') !== u) v.setAttribute('src', u);
+  v.play?.().catch(() => {});
+}
+
 export function applyTheme(site) {
   const s = document.documentElement.style, c = site.colors || {};
   s.setProperty('--primary', c.primary || '#18b4ff');
@@ -32,7 +48,8 @@ export function applyTheme(site) {
   document.body.dataset.bg = site.background || 'network';
   if (site.background === 'image' && site.background_url) s.setProperty('--bg-image', `url("${safeUrl(site.background_url)}")`);
   else s.removeProperty('--bg-image');
-  setFxTheme(c.primary || '#18b4ff', c.accent || '#8b5cf6', site.background || 'network');
+  setFxTheme(c.primary || '#18b4ff', c.accent || '#8b5cf6', site.background || 'network', c.bg || '#05060b');
+  bgVideo(site.background === 'video' ? site.background_video_url : null);
   if (site.favicon_url) $('link[rel=icon]').href = safeUrl(site.favicon_url);
   $('meta[name=theme-color]')?.setAttribute('content', c.bg || '#05060b');
 }
@@ -178,6 +195,7 @@ addEventListener('popstate', () => render(false));
   state.settings = { social: {}, faq: [], payments: {}, ...(settings || {}) };
   state.settings.site = { ...DEFAULT_SITE, ...(state.settings.site || {}) };
   applyTheme(state.settings.site);
+  showIntro(getContent(state).intro, state.settings.site);
   renderLayout();
   await refreshMe();
   if (!settings) toast('تعذر الاتصال بالخادم حالياً — بعض الميزات قد لا تعمل', 'warn', 6000);

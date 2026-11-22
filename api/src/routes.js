@@ -170,7 +170,9 @@ export default function (add) {
       fail(c.uid ? 402 : 401, c.uid ? 'purchase_required' : 'auth_required');
     }
     const f = await c.db.one('select * from record_download($1, $2, $3)', [id, fid, c.visitor]);
-    return { url: await storage.signGet(f.object_key, { name: f.file_name, expires: 900 }), file_name: f.file_name, size: f.size_bytes, expires_in: 900 };
+    // الملفات الكبيرة: صلاحية أطول للرابط حتى يستطيع المتصفح استئناف التنزيل على الشبكات البطيئة (15 دقيقة → حتى 12 ساعة)
+    const ttl = Math.min(43200, Math.max(900, Math.ceil(Number(f.size_bytes) / 262144)));
+    return { url: await storage.signGet(f.object_key, { name: f.file_name, expires: ttl }), file_name: f.file_name, size: f.size_bytes, expires_in: ttl };
   }, { rl: ['dl', 30] });
 
   add('GET', '/lessons/:id/media', 'optional', async (c) => {
