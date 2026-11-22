@@ -1,0 +1,12 @@
+import { createSql } from '../api/src/sql.js';
+const s = createSql(process.env.STORE_DB_URL);
+const t = async (name, fn) => { try { console.log('OK  ', name, JSON.stringify(await fn()).slice(0, 160)); } catch (e) { console.log('DENY', name, e.code, e.message.slice(0, 90)); } };
+await t('whoami', () => s.query('select current_user, (select rolbypassrls from pg_roles where rolname=current_user) bypass'));
+await t('settings visible keys', () => s.query('select key from settings order by key'));
+await t('profiles anon', () => s.query('select count(*) from profiles'));
+await t('insert product anon (should deny)', () => s.query("insert into products(slug,kind,title) values ('x-test','file','xx') returning id"));
+await t('neon_auth access (should deny)', () => s.query('select count(*) from neon_auth."user"'));
+await t('ops access (should deny)', () => s.query('select count(*) from ops.migrations'));
+await t('security event insert', () => s.batch([["select set_config('app.uid','',true)"], ["insert into security_events(kind,severity,path) values ('test','low','/rls-check') returning id"]]));
+await t('security events read anon (0 rows)', () => s.query('select count(*) from security_events'));
+await t('ensure_profile anon (should deny)', () => s.query('select * from ensure_profile()'));

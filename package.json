@@ -1,0 +1,30 @@
+{
+  "name": "anon-store",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build:web": "vite build",
+    "build:api": "node scripts/build-api.mjs",
+    "test:api": "node scripts/test-api.mjs",
+    "db:migrate": "node scripts/db.mjs migrate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@fontsource-variable/cairo": "^5.3.0",
+    "@fontsource/tajawal": "^5.3.0",
+    "@neon/neon-js": "^0.10.2"
+  },
+  "devDependencies": {
+    "@neondatabase/serverless": "^1.2.1",
+    "aws4fetch": "^1.0.20",
+    "esbuild": "^0.28.2",
+    "vite": "^8.3.8"
+  }
+}
