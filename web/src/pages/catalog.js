@@ -1,4 +1,5 @@
-import { html, mount, actions, debounce } from '../lib/dom.js';
+import { html, mount, actions, debounce, safeUrl } from '../lib/dom.js';
+import { getContent } from '../lib/content.js';
 import { api, KINDS } from '../lib/core.js';
 import { icon, art } from '../lib/art.js';
 import { grid, skeleton, errorBox, card, empty } from '../lib/ui.js';
@@ -15,8 +16,9 @@ const PAGES = {
 
 export default async function (view, m, { state, setTitle }) {
   const cfg = PAGES[m[1]];
-  const k = cfg.kind && KINDS[cfg.kind];
-  const title = cfg.title || k.plural, desc = cfg.desc || k.desc;
+  const key = cfg.kind || (m[1] === 'search' ? null : m[1]);
+  const sc = key ? getContent(state).sections[key] : null;
+  const title = sc?.title || cfg.title, desc = sc?.desc || cfg.desc;
   setTitle(title);
   if (cfg.kind && state.settings.site.sections?.[cfg.kind] === false) {
     mount(view, html`<div class="container page">${empty('هذا القسم غير متاح حالياً')}</div>`);
@@ -25,7 +27,7 @@ export default async function (view, m, { state, setTitle }) {
   const q = new URLSearchParams(location.search);
   const st = { q: q.get('q') || '', filter: cfg.filter || '', sort: cfg.sort || 'latest', kind: cfg.kind || '', offset: 0, items: [], total: 0 };
   mount(view, html`<div class="container page">
-    <div class="banner reveal">${art(cfg.art || cfg.kind, title)}<div><h1>${title}</h1><p>${desc}</p></div></div>
+    <div class="banner reveal">${sc?.image_url ? html`<img class="art" src="${safeUrl(sc.image_url)}" alt="">` : art(cfg.art || cfg.kind, title)}<div><h1>${title}</h1><p>${desc}</p></div></div>
     <div class="toolbar">
       <input class="input grow" id="q" placeholder="ابحث في ${title}..." value="${st.q}" maxlength="80">
       ${cfg.filter ? '' : html`<div class="chips">${[['', 'الكل'], ['free', 'مجاني'], ['paid', 'مدفوع']].map(([v, t]) => html`<button class="chip${st.filter === v ? ' active' : ''}" data-act="filter" data-v="${v}">${t}</button>`)}</div>`}

@@ -100,6 +100,11 @@ async function handle(req) {
   };
   c.unblock = (ip) => { blocked.delete(ip); clearStrikes(ip); };
 
+  // مصيدة مسارات الفحص الممررة من Netlify (/wp-admin، /.env ...): تسجيل فقط، لأن العنوان الظاهر هو عنوان Netlify
+  if (c.path === '/trap' || c.path.startsWith('/trap/')) {
+    await c.secLog('path_scan_site', 'medium', { path: (c.path.slice(5) || url.searchParams.get('p') || '').slice(0, 300), via: req.headers.get('x-nf-request-id') ? 'netlify' : 'direct' });
+    return out(404, { error: 'not_found' });
+  }
   await refreshBlocks();
   const auth = req.headers.get('authorization') || '';
   const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : null;

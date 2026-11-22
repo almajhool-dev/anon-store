@@ -180,11 +180,13 @@ ok('ban user', (await api(`/admin/users/${meU.data.profile.id}/ban`, { method: '
 ok('banned user locked out', (await api('/me', { token: user.token })).data?.error === 'banned');
 ok('admin cannot ban self', (await api(`/admin/users/${meA.data.profile.id}/ban`, { method: 'POST', token: admin.token, body: {} })).status === 403);
 ok('unban user', (await api(`/admin/users/${meU.data.profile.id}/ban`, { method: 'POST', token: admin.token, body: { banned: false } })).status === 200);
-const rls = createSql(process.env.STORE_DB_URL);
-const [, leak] = await rls.batch([["select set_config('app.uid', $1, true)", [meU.data.profile.id]], ['select count(*)::int as n from purchases where user_id <> app_uid()']]);
+// نفس مسار الإنتاج: اتصال المالك + set local role store_api (أو اتصال store_api المباشر إن وُجد)
+const rls = process.env.STORE_DB_URL ? createSql(process.env.STORE_DB_URL) : null;
+const asApi = (q) => (rls ? rls.batch(q) : owner.batch([['set local role store_api'], ...q]));
+const leak = (await asApi([["select set_config('app.uid', $1, true)", [meU.data.profile.id]], ['select count(*)::int as n from purchases where user_id <> app_uid()']])).at(-1);
 ok('RLS: user cannot read others purchases (DB level)', leak[0].n === 0);
 let denied = false;
-try { await rls.batch([["select set_config('app.uid', $1, true)", [meU.data.profile.id]], [`update profiles set role = 'admin' where id = app_uid()`]]); } catch { denied = true; }
+try { await asApi([["select set_config('app.uid', $1, true)", [meU.data.profile.id]], [`update profiles set role = 'admin' where id = app_uid()`]]); } catch { denied = true; }
 ok('DB trigger blocks self-promotion to admin', denied);
 
 // --- الأمان ---
@@ -208,6 +210,49 @@ if (LOCAL) {
   ok('admin alerted about high-severity events', n.data?.items?.some((x) => x.kind === 'security'));
 }
 ok('audit log records admin actions', (await api('/admin/audit', { token: admin.token })).data?.items?.length > 5);
+
+// --- محتوى الموقع والصفحات وأيقونات الهاتف (لوحة المالك) ---
+{
+  const content = {
+    hero: { badge: 'شارة', title: 'عنوان QA', highlight: 'ملون', subtitle: 'وصف', cta1_text: 'ابدأ', cta1_link: '/p/دورة-بايثون', cta2_text: 'تواصل', cta2_link: 'https://t.me/HIKR7', image_url: null, show_terminal: true, terminal: ['$ scan', '[ok] done'] },
+    sections: { python: { title: 'أدوات', nav: 'بايثون', desc: 'وصف', image_url: 'https://example.com/a.webp' } },
+    features: [{ icon: 'bolt', title: 'سريع', text: 'نص' }, { icon: 'bad-icon', title: 'x', text: '' }],
+    banners: [{ image_url: null, title: 'عرض', text: 'نص', button: 'اشترِ', link: '/paid' }],
+    show: { banners: true, features: false }, contact: { title: 'تواصل', text: 'نص' }, footer: { text: 'حقوق', about: 'نبذة' },
+  };
+  const put = await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: content } });
+  const v = put.data?.value;
+  ok('content: owner saves site content (Arabic internal link ok)', put.status === 200 && v.hero.cta1_link === '/p/دورة-بايثون' && v.sections.apk && v.features[1].icon === 'shield' && v.show.features === false, JSON.stringify(put.data).slice(0, 200));
+  const pub = await api('/settings');
+  ok('content: visible to visitors via /settings', pub.data?.content?.hero?.title === 'عنوان QA' && pub.data?.content?.banners?.length === 1, JSON.stringify(pub.data).slice(0, 160));
+  for (const [name, bad] of [['javascript link', { banners: [{ title: 't', link: 'javascript:alert(1)' }] }], ['protocol-relative link', { hero: { cta1_link: '//evil.com' } }], ['backslash link', { hero: { cta1_link: '/\\evil.com' } }], ['http image', { hero: { image_url: 'http://evil.com/x.png' } }], ['too many banners', { banners: Array(7).fill({ title: 't' }) }]]) {
+    const r = await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, ...bad } } });
+    ok(`content: rejects ${name}`, r.status === 400, r.status);
+  }
+  ok('content: normal user cannot change content', (await api('/admin/settings/content', { method: 'PUT', token: user.token, body: { value: content }, ip: '198.51.100.23' })).status === 403);
+  const pages = [{ slug: 'about', title: 'من نحن', body: '## مرحباً\n- نقطة', in_nav: true, in_footer: true }, { slug: 'tg', title: 'قناتنا', url: 'https://t.me/HIKR7', in_footer: true }];
+  const pp = await api('/admin/settings/pages', { method: 'PUT', token: admin.token, body: { value: pages } });
+  ok('pages: owner creates pages and links', pp.status === 200 && pp.data.value.length === 2 && pp.data.value[1].url === 'https://t.me/HIKR7' && pp.data.value[0].in_nav === true, JSON.stringify(pp.data).slice(0, 160));
+  ok('pages: public via /settings', (await api('/settings')).data?.pages?.[0]?.slug === 'about');
+  for (const [name, bad] of [['invalid slug', [{ slug: 'من', title: 'صفحة' }]], ['duplicate slug', [{ slug: 'a1', title: 'صفحة' }, { slug: 'a1', title: 'صفحة' }]]]) {
+    ok(`pages: rejects ${name}`, (await api('/admin/settings/pages', { method: 'PUT', token: admin.token, body: { value: bad } })).status === 400);
+  }
+  const icon = await api('/admin/media', { method: 'POST', token: admin.token, body: { mime: 'image/png', size: 2048, purpose: 'app_icon' } });
+  ok('media: phone icon signs fixed brand key', icon.status === 200 && /\/media\/brand\/app-icon\?v=\d+$/.test(icon.data.public_url) && icon.data.upload_url.includes('brand/app-icon'), JSON.stringify(icon.data).slice(0, 160));
+  ok('media: brand icon rejects gif', (await api('/admin/media', { method: 'POST', token: admin.token, body: { mime: 'image/gif', size: 2048, purpose: 'app_icon' } })).status === 400);
+  const share = await api('/admin/media', { method: 'POST', token: admin.token, body: { mime: 'image/jpeg', size: 4096, purpose: 'share' } });
+  ok('media: share image signs brand/share', share.status === 200 && share.data.public_url.includes('/brand/share'));
+  const webp = await api('/admin/media', { method: 'POST', token: admin.token, body: { mime: 'image/webp', size: 4096 } });
+  ok('media: generic webp image allowed', webp.status === 200 && !webp.data.public_url.includes('/brand/'), webp.status);
+  ok('media: normal user cannot upload images', (await api('/admin/media', { method: 'POST', token: user.token, body: { mime: 'image/png', size: 10 }, ip: '198.51.100.23' })).status === 403);
+  const st = await api('/admin/stats', { token: admin.token });
+  ok('stats: visitor totals present', ['visitors_30d', 'visits_total', 'pageviews_total'].every((k) => typeof st.data?.[k] === 'number'), JSON.stringify(st.data).slice(0, 200));
+  if (LOCAL) {
+    ok('honeypot path form → 404', (await api('/trap/wp-admin/setup.php', { ip: '203.0.113.77' })).status === 404);
+    const [ev] = await owner.query(`select * from security_events order by created_at desc limit 1`);
+    ok('honeypot logs scanned path', JSON.stringify(ev || {}).includes('/wp-admin/setup.php'), JSON.stringify(ev).slice(0, 200));
+  }
+}
 
 // --- التنظيف عبر واجهة المدير نفسها ---
 for (const p of [free.data, course.data]) await api(`/admin/products/${p.id}`, { method: 'DELETE', token: admin.token });

@@ -7,6 +7,7 @@ import { html, mount, $, $$, toast, safeUrl } from './lib/dom.js';
 import { api, auth, KINDS } from './lib/core.js';
 import { icon, logo } from './lib/art.js';
 import { startFx, setFxTheme, reveal, autoReveal } from './lib/fx.js';
+import { getContent, SECTIONS } from './lib/content.js';
 
 export const state = { settings: null, me: null, unread: 0 };
 const DEFAULT_SITE = { name: 'متجر المبرمج المجهول', name_en: 'Anonymous Programmer Store', tagline: '', colors: { primary: '#18b4ff', accent: '#8b5cf6', bg: '#05060b' }, sections: {}, registration_enabled: true, store_enabled: true, currency: 'USD' };
@@ -18,6 +19,7 @@ const ROUTES = [
   [/^\/learn\/([a-z0-9-]+)$/, () => import('./pages/learn.js')],
   [/^\/account$/, () => import('./pages/account.js')],
   [/^\/(contact|faq|login|claim)$/, () => import('./pages/info.js')],
+  [/^\/page\/([a-z0-9-]+)$/, () => import('./pages/page.js')],
   [/^\/admin(?:\/([a-z]+))?$/, () => import('./admin/admin.js')],
 ];
 
@@ -32,6 +34,7 @@ export function applyTheme(site) {
   else s.removeProperty('--bg-image');
   setFxTheme(c.primary || '#18b4ff', c.accent || '#8b5cf6', site.background || 'network');
   if (site.favicon_url) $('link[rel=icon]').href = safeUrl(site.favicon_url);
+  $('meta[name=theme-color]')?.setAttribute('content', c.bg || '#05060b');
 }
 
 export async function refreshMe() {
@@ -47,10 +50,12 @@ export const isAdmin = () => ['admin', 'owner'].includes(state.me?.role);
 export const setTitle = (t) => { document.title = t ? `${t} | ${state.settings.site.name}` : `${state.settings.site.name} | ${state.settings.site.name_en || 'Anonymous Programmer'}`; };
 
 function navItems() {
-  const sec = state.settings.site.sections || {};
-  const short = { python: 'Python', apk: 'Android APK', course: 'الكورسات', video: 'الفيديوهات', file: 'الملفات والمشاريع' };
-  return [['/', 'الرئيسية', 'home'], ...Object.entries(KINDS).filter(([k]) => sec[k] !== false).map(([k, v]) => [v.path, short[k], { python: 'terminal', apk: 'phone', course: 'cap', video: 'play', file: 'folder' }[k]]),
-    ['/free', 'المجانية', 'gift'], ['/paid', 'المدفوعة', 'gem']];
+  const sec = state.settings.site.sections || {}, c = getContent(state);
+  const ic = { python: 'terminal', apk: 'phone', course: 'cap', video: 'play', file: 'folder' };
+  const items = [['/', 'الرئيسية', 'home'], ...Object.keys(ic).filter((k) => sec[k] !== false).map((k) => [SECTIONS[k].path, c.sections[k].nav, ic[k]]),
+    ['/free', c.sections.free.nav, 'gift'], ['/paid', c.sections.paid.nav, 'gem']];
+  for (const p of state.settings.pages || []) if (p.in_nav) items.push([p.url || '/page/' + p.slug, p.title, 'list']);
+  return items;
 }
 
 function renderHeader() {
@@ -64,7 +69,7 @@ function renderHeader() {
     <nav class="nav" aria-label="التنقل الرئيسي">${navItems().map(([h, t]) => html`<a href="${h}">${t}</a>`)}</nav>
     <div class="hdr-actions">
       <button class="icon-btn" data-search aria-label="بحث">${icon('search')}</button>
-      ${me ? html`${isAdmin() ? html`<a class="icon-btn hide-m" href="/admin" title="لوحة المدير" aria-label="لوحة المدير">${icon('shield')}</a>` : ''}
+      ${me ? html`${isAdmin() ? html`<a class="icon-btn" href="/admin" title="لوحة المدير" aria-label="لوحة المدير">${icon('shield')}</a>` : ''}
         <a class="icon-btn" href="/account#notifications" aria-label="الإشعارات">${icon('bell')}${state.unread ? html`<span class="dot">${state.unread > 99 ? '99+' : state.unread}</span>` : ''}</a>
         <a href="/account" class="hide-m" aria-label="حسابي">${ava}</a>`
     : html`<a class="btn primary sm" href="/login">${icon('user')}<span class="hide-xs"> دخول</span></a>`}
@@ -81,18 +86,19 @@ function renderHeader() {
 }
 
 function renderLayout() {
-  const s = state.settings.site, so = state.settings.social || {};
+  const s = state.settings.site, so = state.settings.social || {}, c = getContent(state);
+  const fpages = (state.settings.pages || []).filter((p) => p.in_footer);
   mount($('#app'), html`<header id="hdr" class="hdr"></header><div id="drawer" class="drawer"><nav aria-label="القائمة"></nav></div>
   <main id="view" tabindex="-1"></main>
   <footer class="ftr"><div class="container">
     <div class="cols">
-      <div><a class="brand" href="/">${logo(s.logo_url)}<span>${s.name}<small>${s.name_en || ''}</small></span></a><p class="muted small mt">${s.tagline}</p>
+      <div><a class="brand" href="/">${logo(s.logo_url)}<span>${s.name}<small>${s.name_en || ''}</small></span></a><p class="muted small mt">${c.footer.about || s.tagline}</p>
         <div class="socials">${socialLinks(so).map(([u, ic, t]) => html`<a class="icon-btn" href="${u}" target="_blank" rel="noopener" aria-label="${t}">${icon(ic)}</a>`)}</div></div>
-      <div><h4>الأقسام</h4>${Object.values(KINDS).map((k) => html`<a href="${k.path}">${k.plural}</a>`)}</div>
+      <div><h4>الأقسام</h4>${Object.keys(KINDS).filter((k) => s.sections?.[k] !== false).map((k) => html`<a href="${SECTIONS[k].path}">${c.sections[k].title}</a>`)}</div>
       <div><h4>المتجر</h4><a href="/latest">أحدث المنتجات</a><a href="/top">الأكثر تحميلاً</a><a href="/free">المنتجات المجانية</a><a href="/paid">المنتجات المدفوعة</a></div>
-      <div><h4>الدعم</h4><a href="/contact">التواصل والدعم</a><a href="/faq">الأسئلة الشائعة</a><a href="/account">حسابي</a></div>
+      <div><h4>الدعم</h4><a href="/contact">التواصل والدعم</a><a href="/faq">الأسئلة الشائعة</a><a href="/account">حسابي</a>${fpages.map((p) => html`<a href="${p.url || '/page/' + p.slug}">${p.title}</a>`)}</div>
     </div>
-    <div class="copy"><span>© ${new Date().getFullYear()} المبرمج المجهول — جميع الحقوق محفوظة</span><span class="ltr">Anonymous Programmer Store</span></div>
+    <div class="copy"><span>© ${new Date().getFullYear()} ${c.footer.text}</span><span class="ltr">Anonymous Programmer Store</span></div>
   </div></footer>`);
   renderHeader();
   autoReveal($('#view'));

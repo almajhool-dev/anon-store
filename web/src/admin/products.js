@@ -5,20 +5,13 @@ import { icon } from '../lib/art.js';
 import { loader, empty, cover } from '../lib/ui.js';
 import { Uploader, pendingUploads, forgetUpload } from '../lib/uploader.js';
 import { table } from './admin.js';
+import { uploadImage, IMAGE_ACCEPT } from '../lib/image.js';
 
 const ST = { draft: ['مسودة', ''], published: ['منشور', 'ok'], hidden: ['مخفي', 'warn'] };
 const ACCEPT = '.py,.pyw,.ipynb,.txt,.md,.json,.csv,.sh,.zip,.apk,.aab,.xapk,.apks,.jar,.docx,.xlsx,.pptx,.rar,.7z,.gz,.tgz,.tar,.pdf,.mp4,.m4v,.mov,.mkv,.webm,.mp3,.wav,.exe,.msi,.doc,.xls,.ppt,.deb,.iso,.img,.bin';
 const STATE_TXT = { preparing: 'تحضير…', uploading: 'جارٍ الرفع', paused: 'متوقف مؤقتاً', offline: 'بانتظار عودة الإنترنت…', retrying: 'إعادة المحاولة', completing: 'تجميع وفحص الملف…', done: 'اكتمل ✅', error: 'خطأ', canceled: 'أُلغي' };
 const active = new Map();
 
-export async function uploadImage(file) {
-  if (!/^image\/(png|jpeg|webp|gif|x-icon|vnd\.microsoft\.icon)$/.test(file.type)) throw new Error('الصور المسموحة: PNG, JPG, WEBP, GIF, ICO');
-  if (file.size > 8 * 1024 * 1024) throw new Error('حجم الصورة يتجاوز 8MB');
-  const r = await api.post('/admin/media', { mime: file.type, size: file.size });
-  const put = await fetch(r.upload_url, { method: 'PUT', headers: r.headers, body: file });
-  if (!put.ok) throw new Error('فشل رفع الصورة');
-  return r.public_url;
-}
 const localInput = (iso) => { if (!iso) return ''; const d = new Date(iso); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
 const fmtEta = (s) => (!s || !isFinite(s) ? '' : s > 3600 ? `${Math.floor(s / 3600)}س ${Math.floor((s % 3600) / 60)}د` : s > 60 ? `${Math.floor(s / 60)}د ${Math.floor(s % 60)}ث` : `${Math.floor(s)}ث`);
 
@@ -66,10 +59,10 @@ async function editor(main, ctx, id) {
       <div class="fgrid"><label class="field"><span>الإصدار</span><input class="input ltr" name="version" maxlength="40" value="${p.version}"></label>
         <label class="field"><span>وسوم (مفصولة بفواصل)</span><input class="input" name="tags" value="${(p.tags || []).join(', ')}"></label></div>
       <label class="switch"><input type="checkbox" name="featured" ${p.featured ? 'checked' : ''}> منتج مميز</label>
-      <div class="field"><span>صورة الغلاف</span><div class="img-pick">${p.cover_url ? html`<img src="${safeUrl(p.cover_url)}" alt="">` : ''}<label class="btn sm">${icon('upload')} رفع صورة<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-img="cover" hidden></label>
+      <div class="field"><span>صورة الغلاف</span><div class="img-pick">${p.cover_url ? html`<img src="${safeUrl(p.cover_url)}" alt="">` : ''}<label class="btn sm">${icon('upload')} رفع صورة<input type="file" accept="${IMAGE_ACCEPT}" data-img="cover" hidden></label>
         <input class="input ltr grow" name="cover_url" value="${p.cover_url || ''}" placeholder="أو ألصق رابط https"></div></div>
       <div class="field"><span>معرض الصور</span><div class="img-pick">${gallery.map((u, i) => html`<span class="row"><img src="${safeUrl(u)}" alt=""><button type="button" class="btn ghost sm" data-act="gdel" data-i="${i}" aria-label="حذف">${icon('x')}</button></span>`)}
-        <label class="btn sm">${icon('plus')} إضافة صور<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple data-img="gallery" hidden></label></div></div>
+        <label class="btn sm">${icon('plus')} إضافة صور<input type="file" accept="${IMAGE_ACCEPT}" multiple data-img="gallery" hidden></label></div></div>
       <div class="row wrap gap mt"><button class="btn primary lg">${icon('check')} ${id ? 'حفظ التغييرات' : 'إنشاء المنتج'}</button>${id ? html`<button type="button" class="btn danger" data-act="delp">${icon('trash')} حذف المنتج</button>` : ''}</div>
     </form>
     ${id ? html`

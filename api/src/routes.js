@@ -10,7 +10,7 @@ const SORTS = {
   price_asc: 'effective_price(p) asc', price_desc: 'effective_price(p) desc',
 };
 const like = (s) => (s || '').trim().slice(0, 80).replace(/[%_\\]/g, '\\$&');
-const PUBLIC_SETTINGS = ['site', 'social', 'payments', 'faq'];
+const PUBLIC_SETTINGS = ['site', 'social', 'payments', 'faq', 'content', 'pages'];
 
 export default function (add) {
   add('GET', '/health', 'none', () => ({ ok: true, time: new Date().toISOString() }));
@@ -64,12 +64,6 @@ export default function (add) {
     if (!c.isBot) await c.db.one('select track_visit($1)', [c.visitor]);
     return { ok: true };
   }, { rl: ['track', 60] });
-
-  // مصيدة مسارات الفحص الممررة من Netlify (wp-admin, .env ...): تسجيل فقط دون حظر لأن العنوان الحقيقي غير مضمون
-  add('GET', '/trap', 'none', async (c) => {
-    await c.secLog('path_scan_site', 'medium', { path: (c.url.searchParams.get('p') || '').slice(0, 300), via: c.req.headers.get('x-nf-request-id') ? 'netlify' : 'direct' });
-    fail(404, 'not_found');
-  }, { rl: ['trap', 30] });
 
   add('POST', '/messages', 'optional', async (c) => {
     const b = c.body || {};

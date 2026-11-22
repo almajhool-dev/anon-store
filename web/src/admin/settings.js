@@ -2,14 +2,14 @@
 import { html, mount, actions, toast, busy, $, safeUrl } from '../lib/dom.js';
 import { api, KINDS } from '../lib/core.js';
 import { icon } from '../lib/art.js';
-import { uploadImage } from './products.js';
+import { uploadImage, IMAGE_ACCEPT } from '../lib/image.js';
 
 export default async function (main, ctx) {
   const st = ctx.state.settings;
   const site = structuredClone(st.site), social = { ...(st.social || {}) }, pay = structuredClone(st.payments || {}), faq = structuredClone(st.faq || []);
   const sw = (name, on, label) => html`<label class="switch"><input type="checkbox" name="${name}" ${on ? 'checked' : ''}> ${label}</label>`;
   const imgField = (key, label) => html`<div class="field"><span>${label}</span><div class="img-pick">${site[key] ? html`<img src="${safeUrl(site[key])}" alt="">` : ''}
-    <label class="btn sm">${icon('upload')} رفع<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/x-icon" data-img="${key}" hidden></label>
+    <label class="btn sm">${icon('upload')} رفع<input type="file" accept="${IMAGE_ACCEPT}" data-img="${key}" hidden></label>
     <input class="input ltr grow" name="${key}" value="${site[key] || ''}" placeholder="https://..."></div></div>`;
 
   function render() {
@@ -65,7 +65,7 @@ export default async function (main, ctx) {
     const sf = $('#site', main);
     sf.addEventListener('submit', (e) => { e.preventDefault(); Object.assign(site, readSite(sf)); save('site', site, sf.querySelector('.btn.primary')); });
     main.querySelectorAll('[data-img]').forEach((inp) => inp.addEventListener('change', async () => {
-      try { toast('جارٍ رفع الصورة…'); const url = await uploadImage(inp.files[0]); Object.assign(site, readSite(sf), { [inp.dataset.img]: url }); render(); toast('تم الرفع — اضغط حفظ المظهر', 'ok'); } catch (e) { toast(e.message, 'error'); }
+      try { toast('جارٍ رفع الصورة…'); const k = inp.dataset.img, url = await uploadImage(inp.files[0], k === 'favicon_url' ? { max: 256, type: 'image/png' } : { max: k === 'logo_url' ? 1024 : 1920 }); Object.assign(site, readSite(sf), { [inp.dataset.img]: url }); render(); toast('تم الرفع — اضغط حفظ المظهر', 'ok'); } catch (e) { toast(e.message, 'error'); }
     }));
     $('#social', main).addEventListener('submit', (e) => {
       e.preventDefault();

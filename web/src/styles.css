@@ -292,3 +292,10 @@ details summary::before { content: '+'; color: var(--primary); font-weight: 900;
   .brand svg, .brand .logo-img { width: 34px; height: 34px; } .hdr-actions { gap: 6px; } .icon-btn { width: 36px; height: 36px; } .hide-xs { display: none; }
   .hero-logo { width: min(220px, 60%); }
 }
+
+.banners { display: grid; gap: 14px; padding-top: 22px; padding-bottom: 0; }
+.banner-ad { overflow: hidden; } .banner-ad:has(img) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; }
+.banner-ad img { width: 100%; height: 100%; max-height: 280px; object-fit: cover; } .banner-ad > div { padding: 22px; } .banner-ad p { color: var(--muted); }
+.img-pick img.sq { width: 72px; height: 72px; border-radius: 16px; }
+.savebar { position: sticky; bottom: 0; z-index: 5; padding: 12px 0; margin-top: 16px; background: linear-gradient(0deg, var(--bg) 70%, transparent); }
+@media (max-width: 700px) { .banner-ad:has(img) { grid-template-columns: 1fr; } .banner-ad img { max-height: 200px; } }

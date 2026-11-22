@@ -12,11 +12,13 @@
 - التخزين: Neon Object Storage (S3). الرفع المجزأ مباشرة من المتصفح بروابط موقعة؛ التحميل بروابط GET موقعة (15 دقيقة، الفيديو 4 ساعات).
 - النشر بلا أسرار: الدالة تستخدم `DATABASE_URL` المحقون من Neon، والمُحمِّل يتحقق من SHA-256 للحزمة.
 - تحديد المعدل يُبطئ فقط (429) ولا يحظر (CGNAT في العراق)؛ الحظر التلقائي لأنماط الهجوم فقط.
+- المحتوى القابل للتعديل في `settings` (`content`, `pages`) ويُدمج مع `lib/content.js`؛ أيقونة الهاتف وصورة المشاركة بمفاتيح ثابتة `media/brand/app-icon|share`. قيم jsonb تُمرَّر `JSON.stringify` (عميل sql.js يحوّل المصفوفات لمصفوفات Postgres).
 
 ## الأوامر
 - `npm run dev` واجهة محلية · `node scripts/dev-api.mjs` API محلي (يقرأ `.env.local`)
 - `npm run db:migrate` · `node scripts/db.mjs claim` (رمز تفعيل المالك)
 - `npm run test:api` (يتطلب خادم API محلي) · `API_URL=... node scripts/smoke-prod.mjs`
+- الاختبار على فرع Neon منفصل (لا على الإنتاج): `NODE_USE_ENV_PROXY=1 node scripts/with-env.mjs /tmp/branch.json scripts/dev-api.mjs` ثم نفس الأمر مع `scripts/test-api.mjs` (ملف JSON يحوي DATABASE_URL/OWNER وNEON_AUTH_* وAWS_* للفرع).
 - نشر API: `npm run build:api && node scripts/publish-api.mjs` ثم تحديث `API_CODE_URL/API_CODE_SHA256` في الدالة.
 
 ## قواعد

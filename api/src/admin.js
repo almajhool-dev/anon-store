@@ -11,6 +11,15 @@ const audit = (c, action, target, meta = {}) => [
 const bigId = (v) => int(v, 1, Number.MAX_SAFE_INTEGER, 'id');
 const hex = (v) => (/^#[0-9a-f]{6}$/i.test(v || '') ? v : fail(400, 'invalid_color'));
 const bool = (v) => v === true;
+const txt = (v, max, name = 'text') => str(v ?? '', max, { name });
+const link = (v) => {
+  if (!v) return null;
+  v = str(v, 300, { name: 'link' });
+  return /^\/(?![/\\])[\p{L}\p{N}_\-/?=&#.%~+]*$/u.test(v) ? v : httpsUrl(v, 'link');
+};
+const ICONS = ['shield', 'lock', 'play', 'cart', 'bolt', 'star', 'heart', 'gift', 'gem', 'code', 'terminal', 'phone', 'cap', 'folder', 'download', 'upload', 'chat', 'send', 'mail', 'eye', 'check', 'clock', 'chart', 'key', 'help', 'grid', 'trend', 'user', 'bell', 'music', 'list', 'disk'];
+const SECTION_KEYS = ['python', 'apk', 'course', 'video', 'file', 'free', 'paid', 'latest', 'top'];
+const list = (v, max, name) => { if (v == null) return []; if (!Array.isArray(v) || v.length > max) fail(400, 'invalid_' + name); return v; };
 
 function productInput(b, partial) {
   const o = {}, has = (k) => b[k] !== undefined;
@@ -74,6 +83,30 @@ function settingInput(key, v) {
       gateways: { zaincash: { enabled: false, label: 'زين كاش' }, fib: { enabled: false, label: 'First Iraqi Bank' }, qicard: { enabled: false, label: 'Qi Card' } },
     };
   }
+  if (key === 'content') {
+    const h = v.hero || {}, show = v.show || {};
+    return {
+      hero: { badge: txt(h.badge, 60), title: txt(h.title, 120), highlight: txt(h.highlight, 120), subtitle: txt(h.subtitle, 300),
+        cta1_text: txt(h.cta1_text, 40), cta1_link: link(h.cta1_link), cta2_text: txt(h.cta2_text, 40), cta2_link: link(h.cta2_link),
+        image_url: httpsUrl(h.image_url, 'image_url'), show_terminal: h.show_terminal !== false, terminal: list(h.terminal, 8, 'terminal').map((x) => txt(x, 90)) },
+      sections: Object.fromEntries(SECTION_KEYS.map((k) => { const x = v.sections?.[k] || {}; return [k, { title: txt(x.title, 60), nav: txt(x.nav, 30), desc: txt(x.desc, 200), image_url: httpsUrl(x.image_url, 'image_url') }]; })),
+      features: list(v.features, 8, 'features').map((x) => ({ icon: ICONS.includes(x?.icon) ? x.icon : 'shield', title: txt(x?.title, 60), text: txt(x?.text, 200) })),
+      banners: list(v.banners, 6, 'banners').map((x) => ({ image_url: httpsUrl(x?.image_url, 'image_url'), title: txt(x?.title, 120), text: txt(x?.text, 300), button: txt(x?.button, 40), link: link(x?.link) })),
+      show: Object.fromEntries(['banners', 'sections', 'latest', 'top', 'features', 'contact'].map((k) => [k, show[k] !== false])),
+      contact: { title: txt(v.contact?.title, 80), text: txt(v.contact?.text, 300) },
+      footer: { text: txt(v.footer?.text, 200), about: txt(v.footer?.about, 400) },
+      version: Date.now(),
+    };
+  }
+  if (key === 'pages') {
+    const seen = new Set();
+    return list(v, 30, 'pages').map((x) => {
+      const slug = str(x?.slug, 40, { min: 2, name: 'slug' }).toLowerCase();
+      if (!/^[a-z0-9-]{2,40}$/.test(slug) || seen.has(slug)) fail(400, 'invalid_slug');
+      seen.add(slug);
+      return { slug, title: str(x?.title, 80, { min: 2, name: 'title' }), body: str(x?.body ?? '', 20000, { name: 'body', trim: false }), url: link(x?.url), in_nav: bool(x?.in_nav), in_footer: x?.in_footer !== false };
+    });
+  }
   if (key === 'faq') {
     if (!Array.isArray(v) || v.length > 40) fail(400, 'invalid_faq');
     return v.map((x) => ({ q: str(x?.q, 300, { min: 2, name: 'question' }), a: str(x?.a, 3000, { min: 2, name: 'answer' }) }));
@@ -107,7 +140,10 @@ export default function (add) {
         (select count(*) from products where status = 'published')::int as products,
         (select count(*) from security_events where created_at > now() - interval '24 hours' and severity in ('high','critical'))::int as threats_24h,
         (select count(*) from ip_blocks where blocked_until is null or blocked_until > now())::int as active_blocks,
-        (select coalesce(sum(size_bytes), 0) from files where status in ('ready','uploading'))::float8 as storage_used`],
+        (select coalesce(sum(size_bytes), 0) from files where status in ('ready','uploading'))::float8 as storage_used,
+        (select count(*) from visits where day > current_date - 30)::int as visitors_30d,
+        (select count(*) from visits)::int as visits_total,
+        (select coalesce(sum(hits), 0) from visits)::int as pageviews_total`],
       [`select p.id, p.slug, p.title, p.kind, p.views, p.downloads from products p order by p.views desc limit 6`],
       [`select d::date as day, (select count(*) from visits v where v.day = d::date)::int as visitors,
         (select count(*) from downloads w where w.created_at::date = d::date)::int as downloads
@@ -293,9 +329,12 @@ export default function (add) {
     const type = c.body?.mime;
     if (!MAP[type]) fail(400, 'image_type_not_allowed');
     const size = int(c.body?.size, 1, 8 * 1024 * 1024, 'size');
-    const key = `img/${new Date().toISOString().slice(0, 7)}/${randomUUID()}.${MAP[type]}`;
+    // صور الهوية الثابتة (أيقونة الهاتف وصورة المشاركة) لها مسار ثابت تشير إليه index.html
+    const brand = { app_icon: 'brand/app-icon', share: 'brand/share' }[c.body?.purpose];
+    if (brand && !['image/png', 'image/jpeg', 'image/webp'].includes(type)) fail(400, 'image_type_not_allowed');
+    const key = brand || `img/${new Date().toISOString().slice(0, 7)}/${randomUUID()}.${MAP[type]}`;
     await c.db.tx([audit(c, 'media.upload', key, { size, type })]);
-    return { upload_url: await storage.signMediaPut(key, type, size), public_url: storage.mediaUrl(key), headers: { 'content-type': type } };
+    return { upload_url: await storage.signMediaPut(key, type, size), public_url: storage.mediaUrl(key) + (brand ? `?v=${Date.now()}` : ''), headers: { 'content-type': type } };
   }, { rl: ['media', 30] });
 
   add('GET', '/admin/storage', 'admin', async (c) => {
@@ -446,7 +485,7 @@ export default function (add) {
   add('PUT', '/admin/settings/:key', 'admin', async (c) => {
     const key = c.params.key, v = settingInput(key, c.body?.value);
     await c.db.tx([
-      ['insert into settings(key, value, updated_at) values ($1, $2, now()) on conflict (key) do update set value = excluded.value, updated_at = now()', [key, v]],
+      ['insert into settings(key, value, updated_at) values ($1, $2, now()) on conflict (key) do update set value = excluded.value, updated_at = now()', [key, JSON.stringify(v)]],
       audit(c, 'settings.update', key),
     ]);
     c.settingsCache.delete(key);

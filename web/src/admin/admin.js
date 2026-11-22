@@ -5,7 +5,7 @@ import { icon } from '../lib/art.js';
 import { loader, errorBox, empty } from '../lib/ui.js';
 
 const TABS = [['overview', 'نظرة عامة', 'chart'], ['products', 'المنتجات والكورسات', 'grid'], ['orders', 'الطلبات والمبيعات', 'cart'], ['users', 'المستخدمون', 'user'],
-  ['messages', 'الرسائل', 'mail'], ['notify', 'الإشعارات', 'bell'], ['storage', 'التخزين', 'disk'], ['settings', 'المظهر والإعدادات', 'sliders'],
+  ['messages', 'الرسائل', 'mail'], ['notify', 'الإشعارات', 'bell'], ['storage', 'التخزين', 'disk'], ['settings', 'المظهر والإعدادات', 'sliders'], ['content', 'محتوى الموقع', 'edit'], ['pages', 'الصفحات والروابط', 'list'],
   ['security', 'الأمان', 'shield'], ['audit', 'سجل العمليات', 'log']];
 export const table = (head, rows) => html`<div class="table-wrap"><table><thead><tr>${head.map((h) => html`<th>${h}</th>`)}</tr></thead><tbody>${rows}</tbody></table></div>`;
 const ORDER = { pending: ['بانتظار الدفع', 'warn'], paid: ['مدفوع', 'ok'], test: ['تجريبي', 'info'], cancelled: ['ملغي', ''], refunded: ['مسترجع', 'err'] };
@@ -16,7 +16,7 @@ async function overview(main) {
   const max = Math.max(1, ...s.series.map((x) => Math.max(x.visitors, x.downloads)));
   const rev = s.revenue.length ? s.revenue.map((r) => fmtPrice(r.total, r.currency)).join(' + ') : '0';
   const cards = [['user', s.users, 'المستخدمون'], ['plus', s.users_7d, 'مستخدمون جدد (7 أيام)'], ['eye', s.visitors_today, 'زوار اليوم'], ['chart', s.visitors_7d, 'زوار 7 أيام'],
-    ['bolt', s.active_now, 'نشطون الآن (تقريباً)'], ['list', s.pageviews_today, 'مشاهدات الصفحات اليوم'], ['download', s.downloads_total, 'إجمالي التحميلات'], ['download', s.downloads_today, 'تحميلات اليوم'],
+    ['bolt', s.active_now, 'نشطون الآن (تقريباً)'], ['chart', s.visitors_30d, 'زيارات 30 يوماً'], ['eye', s.visits_total, 'إجمالي الزيارات منذ الإطلاق'], ['list', s.pageviews_today, 'مشاهدات الصفحات اليوم'], ['list', s.pageviews_total, 'إجمالي مشاهدات الصفحات'], ['download', s.downloads_total, 'إجمالي التحميلات'], ['download', s.downloads_today, 'تحميلات اليوم'],
     ['cart', s.sales, 'المبيعات المؤكدة'], ['gem', rev, 'الإيرادات'], ['clock', s.pending_orders, 'طلبات بانتظار الدفع'], ['mail', s.new_messages, 'رسائل جديدة'],
     ['grid', s.products, 'منتجات منشورة'], ['shield', s.threats_24h, 'تهديدات (24 ساعة)'], ['ban', s.active_blocks, 'عناوين محظورة'], ['disk', fmtBytes(s.storage_used), `التخزين المستخدم (من ${fmtBytes(s.storage_quota)})`]];
   mount(main, html`<h2>نظرة عامة</h2><div class="stats">${cards.map(([i, n, l]) => html`<div class="card stat">${icon(i)}<span class="n ltr">${typeof n === 'number' ? fmtNum(n) : n}</span><span class="l">${l}</span></div>`)}</div>
@@ -173,6 +173,7 @@ export default async function (view, m, ctx) {
   try {
     if (tab === 'products') return await (await import('./products.js')).default(main, ctx);
     if (tab === 'settings') return await (await import('./settings.js')).default(main, ctx);
+    if (tab === 'content' || tab === 'pages') return (await import('./content.js')).default(main, ctx, tab);
     await SIMPLE[tab](main, ctx);
   } catch (e) { mount(main, errorBox(e)); }
 }
