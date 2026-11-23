@@ -16,7 +16,7 @@ export default async function (view, _m, { state, setTitle }) {
   const heroImg = h.image_url || s.logo_url;
   mount(view, html`
   ${c.show.banners && c.banners.length ? html`<section class="container section banners${c.banners.length > 1 ? ' slider' : ''}">${c.banners.map((b) => html`<div class="card banner-ad reveal">
-    ${b.image_url ? html`<img src="${safeUrl(b.image_url)}" alt="" loading="lazy">` : ''}<div><h2>${b.title}</h2>${b.text ? html`<p>${b.text}</p>` : ''}${b.link ? btnLink(b.link, 'btn primary', b.button || 'اكتشف الآن') : ''}</div></div>`)}</section>` : ''}
+    ${b.image_url ? html`<img class="ia-${b.anim || 'none'}" data-fx="${b.anim || 'none'}" src="${safeUrl(b.image_url)}" alt="" loading="lazy">` : ''}<div><h2>${b.title}</h2>${b.text ? html`<p>${b.text}</p>` : ''}${b.link ? btnLink(b.link, 'btn primary', b.button || 'اكتشف الآن') : ''}</div></div>`)}</section>` : ''}
   <section class="container hero">
     <div class="reveal">
       ${h.badge ? html`<span class="pill"><i></i> ${h.badge}</span>` : ''}
@@ -24,14 +24,14 @@ export default async function (view, _m, { state, setTitle }) {
       <p class="lead">${h.subtitle || s.tagline}</p>
       <div class="row wrap gap mt">${h.cta1_text ? btnLink(h.cta1_link || '/latest', 'btn primary lg', html`${icon('grid')} ${h.cta1_text}`) : ''}${h.cta2_text ? btnLink(h.cta2_link || '/free', 'btn lg', html`${icon('gift')} ${h.cta2_text}`) : ''}</div>
     </div>
-    <div class="reveal"><div class="hero-logo">${heroImg ? html`<img src="${safeUrl(heroImg)}" alt="">` : raw(LOGO)}</div>
+    <div class="reveal"><div class="hero-logo">${heroImg ? html`<img class="ia-${h.image_anim}" data-fx="${h.image_anim}" src="${safeUrl(heroImg)}" alt="">` : html`<span class="hero-svg ia-${h.image_anim}" data-fx="${h.image_anim}">${raw(LOGO)}</span>`}</div>
       ${h.show_terminal && h.terminal?.length ? html`<div class="card terminal glow"><header><i></i><i></i><i></i></header><pre id="term"></pre></div>` : ''}</div>
   </section>
   ${c.show.sections ? html`<section class="container section"><div class="section-head"><div><h2>الأقسام</h2><p class="muted">كل ما تحتاجه في مكان واحد</p></div></div>
-    <div class="cats">${cats.map((k) => { const x = c.sections[k]; return html`<a class="card cat reveal" href="${SECTIONS[k].path}"><div class="art-wrap ia-${x.anim || 'none'}">${x.image_url ? html`<img class="art" src="${safeUrl(x.image_url)}" alt="" loading="lazy">` : art(k, x.title)}</div><div><b>${x.title}</b><span>${x.desc}</span></div></a>`; })}</div></section>` : ''}
+    <div class="cats">${cats.map((k) => { const x = c.sections[k]; return html`<a class="card cat reveal" href="${SECTIONS[k].path}"><div class="art-wrap ia-${x.anim || 'none'}" data-fx="${x.anim || 'none'}">${x.image_url ? html`<img class="art" src="${safeUrl(x.image_url)}" alt="" loading="lazy">` : art(k, x.title)}</div><div><b>${x.title}</b><span>${x.desc}</span></div></a>`; })}</div></section>` : ''}
   ${c.show.latest ? html`<section class="container section"><div class="section-head"><div><h2>${icon('bolt')} ${c.sections.latest.title}</h2></div><a class="btn ghost sm" href="/latest">عرض الكل ${icon('next')}</a></div><div id="latest">${skeleton(4)}</div></section>` : ''}
   ${c.show.top ? html`<section class="container section"><div class="section-head"><div><h2>${icon('trend')} ${c.sections.top.title}</h2></div><a class="btn ghost sm" href="/top">عرض الكل ${icon('next')}</a></div><div id="top">${skeleton(4)}</div></section>` : ''}
-  ${c.show.features && c.features.length ? html`<section class="container section"><div class="features">${c.features.map((f) => html`<div class="card feature reveal">${f.image_url ? html`<img class="ic ia-${f.anim || 'none'}" src="${safeUrl(f.image_url)}" alt="" loading="lazy">` : html`<span class="ic-wrap ia-${f.anim || 'none'}">${icon(f.icon)}</span>`}<b>${f.title}</b><p>${f.text}</p></div>`)}</div></section>` : ''}
+  ${c.show.features && c.features.length ? html`<section class="container section"><div class="features">${c.features.map((f) => html`<div class="card feature reveal">${f.image_url ? html`<img class="ic ia-${f.anim || 'none'}" data-fx="${f.anim || 'none'}" src="${safeUrl(f.image_url)}" alt="" loading="lazy">` : html`<span class="ic-wrap ia-${f.anim || 'none'}" data-fx="${f.anim || 'none'}">${icon(f.icon)}</span>`}<b>${f.title}</b><p>${f.text}</p></div>`)}</div></section>` : ''}
   ${c.show.contact ? html`<section class="container section"><div class="card pad glow reveal center"><h2 class="gradient-text">${c.contact.title}</h2><p class="muted">${c.contact.text}</p>
     <div class="row wrap center gap mt">${socialLinks(state.settings.social || {}).slice(0, 3).map(([u, i, t]) => html`<a class="btn" href="${u}" target="_blank" rel="noopener">${icon(i)} ${t}</a>`)}<a class="btn primary" href="/contact">${icon('mail')} نموذج الدعم</a></div></div></section>` : ''}`);
 

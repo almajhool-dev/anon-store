@@ -13,7 +13,7 @@ const hex = (v) => (/^#[0-9a-f]{6}$/i.test(v || '') ? v : fail(400, 'invalid_col
 const bool = (v) => v === true;
 const txt = (v, max, name = 'text') => str(v ?? '', max, { name });
 // الفيديو يُعرض فقط من تخزيننا (سياسة CSP: media-src)
-const ANIMS = ['none', 'pulse', 'float', 'spin', 'bounce', 'glow', 'swing'], PT = ['none', 'fade', 'slide', 'zoom', 'flip'], RV = ['none', 'up', 'fade', 'zoom', 'slide', 'flip'];
+const ANIMS = ['none', 'coin', 'pulse', 'float', 'spin', 'bounce', 'glow', 'swing'], PT = ['none', 'fade', 'slide', 'zoom', 'flip'], RV = ['none', 'up', 'fade', 'zoom', 'slide', 'flip'];
 const ownMedia = (v, name) => { const u = httpsUrl(v, name); if (u && !u.startsWith(storage.mediaUrl(''))) fail(400, 'invalid_' + name); return u; };
 const link = (v) => {
   if (!v) return null;
@@ -90,13 +90,14 @@ function settingInput(key, v) {
   if (key === 'content') {
     const h = v.hero || {}, show = v.show || {};
     return {
-      hero: { badge: txt(h.badge, 60), title: txt(h.title, 120), highlight: txt(h.highlight, 120), subtitle: txt(h.subtitle, 300),
+      hero: { image_anim: ANIMS.includes(h.image_anim) ? h.image_anim : 'coin', logo_anim: ANIMS.includes(h.logo_anim) ? h.logo_anim : 'none', badge: txt(h.badge, 60), title: txt(h.title, 120), highlight: txt(h.highlight, 120), subtitle: txt(h.subtitle, 300),
         cta1_text: txt(h.cta1_text, 40), cta1_link: link(h.cta1_link), cta2_text: txt(h.cta2_text, 40), cta2_link: link(h.cta2_link),
         image_url: httpsUrl(h.image_url, 'image_url'), show_terminal: h.show_terminal !== false, terminal: list(h.terminal, 8, 'terminal').map((x) => txt(x, 90)) },
       sections: Object.fromEntries(SECTION_KEYS.map((k) => { const x = v.sections?.[k] || {}; return [k, { title: txt(x.title, 60), nav: txt(x.nav, 30), desc: txt(x.desc, 200), image_url: httpsUrl(x.image_url, 'image_url'), icon: ICONS.includes(x.icon) ? x.icon : null, anim: ANIMS.includes(x.anim) ? x.anim : 'none' }]; })),
       features: list(v.features, 8, 'features').map((x) => ({ icon: ICONS.includes(x?.icon) ? x.icon : 'shield', title: txt(x?.title, 60), text: txt(x?.text, 200), image_url: httpsUrl(x?.image_url, 'image_url'), anim: ANIMS.includes(x?.anim) ? x.anim : 'none' })),
-      banners: list(v.banners, 6, 'banners').map((x) => ({ image_url: httpsUrl(x?.image_url, 'image_url'), title: txt(x?.title, 120), text: txt(x?.text, 300), button: txt(x?.button, 40), link: link(x?.link) })),
+      banners: list(v.banners, 6, 'banners').map((x) => ({ anim: ANIMS.includes(x?.anim) ? x.anim : 'none', image_url: httpsUrl(x?.image_url, 'image_url'), title: txt(x?.title, 120), text: txt(x?.text, 300), button: txt(x?.button, 40), link: link(x?.link) })),
       show: Object.fromEntries(['banners', 'sections', 'latest', 'top', 'features', 'contact'].map((k) => [k, show[k] !== false])),
+      covers_anim: ANIMS.includes(v.covers_anim) ? v.covers_anim : 'none',
       contact: { title: txt(v.contact?.title, 80), text: txt(v.contact?.text, 300) },
       footer: { text: txt(v.footer?.text, 200), about: txt(v.footer?.about, 400) },
       intro: { enabled: v.intro?.enabled === true, media_type: v.intro?.media_type === 'video' ? 'video' : 'image',

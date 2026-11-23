@@ -8,7 +8,7 @@ import { showIntro } from '../lib/intro.js';
 
 const ICONS = ['shield', 'lock', 'play', 'cart', 'bolt', 'star', 'heart', 'gift', 'gem', 'code', 'terminal', 'phone', 'cap', 'folder', 'download', 'upload', 'chat', 'send', 'mail', 'eye', 'check', 'clock', 'chart', 'key', 'help', 'grid', 'trend', 'user', 'bell', 'music', 'list', 'disk'];
 const ICON_AR = { shield: 'درع', lock: 'قفل', play: 'تشغيل', cart: 'سلة', bolt: 'برق', star: 'نجمة', heart: 'قلب', gift: 'هدية', gem: 'جوهرة', code: 'كود', terminal: 'طرفية', phone: 'هاتف', cap: 'قبعة تخرج', folder: 'مجلد', download: 'تنزيل', upload: 'رفع', chat: 'دردشة', send: 'إرسال', mail: 'بريد', eye: 'عين', check: 'علامة صح', clock: 'ساعة', chart: 'رسم بياني', key: 'مفتاح', help: 'مساعدة', grid: 'شبكة', trend: 'صعود', user: 'مستخدم', bell: 'جرس', music: 'موسيقى', list: 'قائمة', disk: 'قرص' };
-const ANIMS = [['none', 'ثابتة'], ['pulse', 'نبض'], ['float', 'طفو'], ['bounce', 'قفز'], ['spin', 'دوران'], ['glow', 'توهج'], ['swing', 'تأرجح']];
+const ANIMS = [['none', 'ثابتة'], ['coin', '🪙 ثلاثي الأبعاد: تدوير باللمس'], ['pulse', 'نبض'], ['float', 'طفو'], ['bounce', 'قفز'], ['spin', 'دوران'], ['glow', 'توهج'], ['swing', 'تأرجح']];
 const iconOpts = (cur, def) => html`${def ? html`<option value="">افتراضية</option>` : ''}${ICONS.map((n) => html`<option value="${n}" ${cur === n ? 'selected' : ''}>${ICON_AR[n] || n}</option>`)}`;
 const animOpts = (cur) => ANIMS.map(([v, t]) => html`<option value="${v}" ${(cur || 'none') === v ? 'selected' : ''}>${t}</option>`);
 
@@ -73,7 +73,7 @@ function contentEditor(main, ctx) {
         <button type="button" class="btn ghost sm" data-act="intro">${icon('eye')} معاينة</button></div></div>
 
     <div class="card pad mt"><div class="row between wrap"><h3>${icon('star')} البنرات الإعلانية (أعلى الصفحة الرئيسية — تتحرك تلقائياً إذا أكثر من واحد)</h3><button type="button" class="btn sm" data-act="add" data-list="banners">${icon('plus')} بنر جديد</button></div>
-      ${c.banners.length ? c.banners.map((b, i) => html`<div class="upl">${imgField('صورة البنر', `banners.${i}.image_url`, b.image_url)}
+      ${c.banners.length ? c.banners.map((b, i) => html`<div class="upl">${imgField('صورة البنر', `banners.${i}.image_url`, b.image_url)}<label class="field"><span>حركة صورة البنر</span><select class="select" data-path="banners.${i}.anim">${animOpts(b.anim)}</select></label>
         <div class="fgrid">${field('العنوان', `banners.${i}.title`, b.title, { max: 120 })}${field('نص الزر', `banners.${i}.button`, b.button, { max: 40, ph: 'اكتشف الآن' })}</div>
         ${field('النص', `banners.${i}.text`, b.text, { area: true })}${field('الرابط (صفحة داخلية مثل /p/اسم-المنتج أو رابط https)', `banners.${i}.link`, b.link, { ltr: true })}${listBtns('banners', i, c.banners.length)}</div>`)
       : html`<p class="muted small">لا توجد بنرات — أضف بنراً لعرض عرض أو كورس جديد.</p>`}</div>
@@ -83,6 +83,7 @@ function contentEditor(main, ctx) {
       ${field('الوصف (يُستخدم الشعار النصي إن تُرك فارغاً)', 'hero.subtitle', h.subtitle, { area: true })}
       <div class="fgrid">${field('نص الزر الأول', 'hero.cta1_text', h.cta1_text, { max: 40 })}${field('رابط الزر الأول', 'hero.cta1_link', h.cta1_link, { ltr: true })}${field('نص الزر الثاني', 'hero.cta2_text', h.cta2_text, { max: 40 })}${field('رابط الزر الثاني', 'hero.cta2_link', h.cta2_link, { ltr: true })}</div>
       ${imgField('الصورة الكبيرة بجانب العنوان', 'hero.image_url', h.image_url, 'يظهر شعار الموقع')}
+      <div class="fgrid"><label class="field"><span>حركة الصورة الكبيرة</span><select class="select" data-path="hero.image_anim">${animOpts(h.image_anim)}</select></label><label class="field"><span>حركة شعار أعلى الموقع</span><select class="select" data-path="hero.logo_anim">${animOpts(h.logo_anim)}</select></label></div>
       <label class="switch"><input type="checkbox" data-path="hero.show_terminal" ${h.show_terminal ? 'checked' : ''}> إظهار نافذة الأوامر المتحركة</label>
       <label class="field"><span>أسطر نافذة الأوامر (سطر لكل جملة)</span><textarea class="input ltr" data-path="hero.terminal" rows="6">${(h.terminal || []).join('\n')}</textarea></label></div>
 
@@ -94,7 +95,8 @@ function contentEditor(main, ctx) {
       ${c.features.map((f, i) => html`<div class="upl"><div class="fgrid"><label class="field"><span>الأيقونة</span><select class="select" data-path="features.${i}.icon">${iconOpts(f.icon)}</select></label><label class="field"><span>الحركة</span><select class="select" data-path="features.${i}.anim">${animOpts(f.anim)}</select></label>
         ${field('العنوان', `features.${i}.title`, f.title, { max: 60 })}</div>${field('النص', `features.${i}.text`, f.text, { max: 200 })}${imgField('أو صورة/GIF متحرك كأيقونة (اختياري)', `features.${i}.image_url`, f.image_url)}${listBtns('features', i, c.features.length)}</div>`)}</div>
 
-    <div class="card pad mt"><h3>${icon('eye')} إظهار وإخفاء أجزاء الصفحة الرئيسية</h3><div class="row wrap gap">${Object.entries(SHOW).map(([k, t]) => html`<label class="switch"><input type="checkbox" data-path="show.${k}" ${c.show[k] ? 'checked' : ''}> ${t}</label>`)}</div></div>
+    <div class="card pad mt"><h3>${icon('eye')} إظهار وإخفاء أجزاء الصفحة الرئيسية</h3><div class="row wrap gap">${Object.entries(SHOW).map(([k, t]) => html`<label class="switch"><input type="checkbox" data-path="show.${k}" ${c.show[k] ? 'checked' : ''}> ${t}</label>`)}</div>
+      <label class="field mt"><span>حركة صور المنتجات والكورسات في القوائم</span><select class="select" data-path="covers_anim">${animOpts(c.covers_anim)}</select></label></div>
 
     <div class="card pad mt"><h3>${icon('chat')} قسم التواصل والفوتر</h3><div class="fgrid">${field('عنوان قسم التواصل', 'contact.title', c.contact.title, { max: 80 })}${field('نص قسم التواصل', 'contact.text', c.contact.text)}</div>
       ${field('نبذة في الفوتر', 'footer.about', c.footer.about, { area: true, max: 400 })}${field('نص حقوق النشر', 'footer.text', c.footer.text, { max: 200 })}</div>

@@ -296,6 +296,9 @@ ok('audit log records admin actions', (await api('/admin/audit', { token: admin.
   await putSite({});
   const ci = await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, features: [{ icon: 'bolt', title: 'سريع', text: '', anim: 'pulse', image_url: 'https://example.com/i.gif' }], sections: { python: { title: 'أدوات', nav: 'بايثون', desc: '', icon: 'code', anim: 'float' } } } } });
   ok('content: animated feature icons + section icons saved', ci.data?.value?.features?.[0]?.anim === 'pulse' && ci.data.value.sections.python.icon === 'code' && ci.data.value.sections.python.anim === 'float', JSON.stringify(ci.data).slice(0, 160));
+  const c3 = await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, hero: { ...content.hero, image_anim: 'coin', logo_anim: 'coin' }, banners: [{ title: 'b', anim: 'coin' }], covers_anim: 'coin' } } });
+  ok('content: 3D touch-rotate (coin) for hero, header logo, banners, covers', c3.data?.value?.hero?.image_anim === 'coin' && c3.data.value.hero.logo_anim === 'coin' && c3.data.value.banners[0].anim === 'coin' && c3.data.value.covers_anim === 'coin', JSON.stringify(c3.data).slice(0, 160));
+  ok('content: unknown animation falls back safely', (await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, covers_anim: '<script>' } } })).data?.value?.covers_anim === 'none');
   if (LOCAL) {
     ok('honeypot path form → 404', (await api('/trap/wp-admin/setup.php', { ip: '203.0.113.77' })).status === 404);
     const [ev] = await owner.query(`select * from security_events order by created_at desc limit 1`);

@@ -9,6 +9,7 @@ import { icon, logo } from './lib/art.js';
 import { startFx, setFxTheme, reveal, autoReveal } from './lib/fx.js';
 import { getContent, SECTIONS } from './lib/content.js';
 import { showIntro } from './lib/intro.js';
+import { auto3d } from './lib/spin3d.js';
 
 export const state = { settings: null, me: null, unread: 0 };
 const DEFAULT_SITE = { name: 'متجر المبرمج المجهول', name_en: 'Anonymous Programmer Store', tagline: '', colors: { primary: '#18b4ff', accent: '#8b5cf6', bg: '#05060b' }, sections: {}, registration_enabled: true, store_enabled: true, currency: 'USD' };
@@ -86,7 +87,7 @@ function renderHeader() {
   const ava = me ? (me.avatar ? html`<img class="avatar" src="${safeUrl(me.avatar)}" alt="" referrerpolicy="no-referrer">` : html`<span class="avatar">${(me.name || '?')[0]}</span>`) : '';
   mount(el, html`${s.announcement ? html`<div class="announce">${s.announcement}</div>` : ''}
   <div class="container">
-    <a class="brand" href="/" aria-label="الرئيسية">${logo(s.logo_url)}<span>${s.name}<small>${s.name_en || 'Anonymous Programmer'}</small></span></a>
+    <a class="brand" href="/" aria-label="الرئيسية"><span class="brand-mark ia-${getContent(state).hero.logo_anim}" data-fx="${getContent(state).hero.logo_anim}">${logo(s.logo_url)}</span><span>${s.name}<small>${s.name_en || 'Anonymous Programmer'}</small></span></a>
     <nav class="nav" aria-label="التنقل الرئيسي">${navItems().map(([h, t]) => html`<a href="${h}">${t}</a>`)}</nav>
     <div class="hdr-actions">
       <button class="icon-btn" data-search aria-label="بحث">${icon('search')}</button>
@@ -201,6 +202,8 @@ addEventListener('popstate', () => render(false));
   state.settings.site = { ...DEFAULT_SITE, ...(state.settings.site || {}) };
   applyTheme(state.settings.site);
   showIntro(getContent(state).intro, state.settings.site);
+  document.body.dataset.covers = getContent(state).covers_anim;
+  auto3d();
   renderLayout();
   await refreshMe();
   if (!settings) toast('تعذر الاتصال بالخادم حالياً — بعض الميزات قد لا تعمل', 'warn', 6000);
