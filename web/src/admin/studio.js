@@ -5,7 +5,8 @@ import { icon, art, LOGO } from '../lib/art.js';
 import { card } from '../lib/ui.js';
 import { PRESETS, PACKS, SECTIONS, preset, FONTS_AR, FONTS_EN, FONTS_HEAD, QUALITY, BUNDLES, DEFAULT_TOKENS, applyDesign } from '../lib/design.js';
 
-const A = (p) => raw(`data-sec="${p.sec}" data-ds-fixed data-lay="${p.lay}" data-pack="${p.pack}"`);
+const A = (p) => raw(`data-sec="${p.sec}" data-ds-fixed${p.lay ? ` data-lay="${p.lay}" data-pack="${p.pack}"` : ''}`);
+const ORIG = (sec) => ({ id: '', sec, lay: '', pack: '' }); // الشكل الأصلي (بلا أي أسلوب)
 const fake = (i) => ({ slug: 'demo', kind: ['python', 'apk', 'course'][i], title: ['أداة فحص الشبكات', 'تطبيق الحماية', 'دورة بايثون الاحترافية'][i], summary: 'وصف مختصر يظهر هنا', price: i ? 9.99 : 0, currency: 'USD', downloads: 1200 + i * 340, discount_percent: i === 1 ? 20 : 0, featured: i === 2 });
 const L = raw(LOGO);
 // نماذج مصغّرة حقيقية لكل قسم (نفس مكونات الموقع وأصنافه) — تُرسم داخل البطاقة بمقياس مصغّر
@@ -24,7 +25,7 @@ const MOCK = {
 const DEV = { mobile: [390, 780, 'هاتف'], tablet: [820, 1000, 'تابلت'], desktop: [1280, 820, 'كمبيوتر'] };
 
 let off = null; // إزالة مستمعي النافذة عند فتح الاستوديو من جديد
-export default async function (main) {
+export default async function (main, ctx) {
   off?.();
   document.body.classList.add('ds-on'); // أزرار المعاينات المصغّرة لا تتأثر بتصميم الأزرار المنشور
   let S;
@@ -51,9 +52,11 @@ export default async function (main) {
     <div class="ds-meta"><b>${p.name}</b><div class="row wrap"><span class="badge">${p.packLabel}</span><button type="button" class="btn ghost sm" data-fav="${p.id}" aria-label="مفضلة">${favs.has(p.id) ? '★' : '☆'}</button><button type="button" class="btn ghost sm" data-cmp="${p.id}">قارن</button></div></div></div>`;
   // تحديث خفيف بلا إعادة رسم (المعاينة الحية تبقى محمّلة وتتغير فوراً)
   const refresh = () => {
-    main.querySelectorAll('.ds-item').forEach((el) => { el.classList.toggle('on', chosen(sec) === el.dataset.pick); el.classList.toggle('cmp', cmpId === el.dataset.pick); const f = el.querySelector('[data-fav]'); if (f) f.textContent = favs.has(el.dataset.pick) ? '★' : '☆'; });
+    main.querySelectorAll('.ds-item').forEach((el) => { el.classList.toggle('on', el.dataset.orig ? !chosen(sec) : chosen(sec) === el.dataset.pick); el.classList.toggle('cmp', cmpId === el.dataset.pick); const f = el.querySelector('[data-fav]'); if (f) f.textContent = favs.has(el.dataset.pick) ? '★' : '☆'; });
     main.querySelectorAll('[data-sec-tab]').forEach((b) => { const sm = b.querySelector('small'), id = chosen(b.dataset.secTab); if (sm) sm.textContent = id ? ' · ' + (preset(id)?.packLabel || '') : ' · الحالي'; });
   };
+  const origItem = () => (packF || favOnly || (q && !'الشكل الأصلي original'.includes(q)) ? '' : html`<div class="card ds-item ds-orig ${chosen(sec) ? '' : 'on'}" data-orig="1"><div class="ds-thumb"><div class="ds-scale">${MOCK[sec](ORIG(sec))}</div></div>
+    <div class="ds-meta"><b>↺ الشكل الأصلي</b><div class="row wrap"><span class="badge">كما كان قبل الاستوديو</span></div></div></div>`);
   const fit = () => main.querySelectorAll('.ds-thumb').forEach((t) => t.firstElementChild.style.setProperty('--k', String(t.clientWidth / 900)));
 
   function draw() {
@@ -62,7 +65,7 @@ export default async function (main) {
     mount(main, html`<h2>${icon('star')} Ultimate Design Studio</h2>
       <p class="muted small">${PRESETS.length} واجهة جاهزة: ${Object.keys(SECTIONS).length} أقسام × ${PACKS.length} أسلوباً، لكل واجهة تخطيط وأسلوب وحركات مختلفة. اختياراتك تُحفظ كمسودة ولا يراها الزوار حتى تضغط «نشر».</p>
       <div class="card pad row wrap gap between"><b id="ds-state">${same() ? 'لا تغييرات غير منشورة' : '● مسودة محفوظة — لم تُنشر بعد'}</b>
-        <div class="row wrap gap"><button class="btn primary" data-act="publish">${icon('check')} نشر للجميع</button><button class="btn ghost" data-act="discard">تجاهل المسودة</button>
+        <div class="row wrap gap"><button class="btn primary" data-act="publish">${icon('check')} نشر للجميع</button><button class="btn ghost" data-act="discard">تجاهل المسودة</button><button class="btn ghost" data-act="reset-all">↺ الشكل الأصلي للموقع</button>
         <button class="btn ghost" data-act="export">${icon('download')} نسخة احتياطية</button><label class="btn ghost">${icon('upload')} استيراد<input type="file" accept="application/json" id="ds-import" hidden></label></div></div>
       <div class="card pad mt"><b>${icon('star')} تصميم كامل بنقرة واحدة</b> <span class="muted small">أسلوب موحّد للأقسام العشرة مع الخطوط والأوزان المناسبة — يذهب للمسودة أولاً</span><div class="row wrap gap mt">${BUNDLES.map(([k, l]) => html`<button class="btn sm ds-bundle" data-bundle="${k}">${l}</button>`)}</div></div>
       <div class="tabs ds-secs mt">${Object.entries(SECTIONS).map(([k, [l]]) => html`<button class="btn sm ${k === sec ? 'primary' : ''}" data-sec-tab="${k}">${l}<small>${chosen(k) ? ' · ' + (preset(chosen(k))?.packLabel || '') : ' · الحالي'}</small></button>`)}</div>
@@ -72,9 +75,9 @@ export default async function (main) {
         <label class="switch"><input type="checkbox" id="ds-fav" ${favOnly ? 'checked' : ''}> المفضلة فقط</label>
         <label class="switch"><input type="checkbox" id="ds-mob" ${draft.mobile_on ? 'checked' : ''}> تصميم مختلف للهاتف</label>
         ${draft.mobile_on ? html`<select class="select" id="ds-target"><option value="desktop" ${target === 'desktop' ? 'selected' : ''}>أعدّل: الكمبيوتر</option><option value="mobile" ${target === 'mobile' ? 'selected' : ''}>أعدّل: الهاتف</option></select>` : ''}
-        <button class="btn ghost sm" data-act="reset-sec">التصميم الحالي لهذا القسم</button>
+        <button class="btn ghost sm" data-act="reset-sec">↺ الأصلي لهذا القسم</button>
       </div>
-      <div class="ds-layout mt"><div class="ds-grid">${list().map(item)}</div>
+      <div class="ds-layout mt"><div class="ds-grid">${origItem()}${list().map(item)}</div>
         <div class="ds-side card pad"><div class="row wrap gap between"><b>معاينة حية</b><div class="row gap">${Object.entries(DEV).map(([k, [, , l]]) => html`<button class="btn sm ${device === k ? 'primary' : ''}" data-dev="${k}">${l}</button>`)}</div></div>
           ${cmpId ? html`<div class="ds-cmp"><div><p>المختار: ${preset(chosen(sec))?.name || 'التصميم الحالي'}</p><div class="ds-frame" id="fA"></div></div><div><p>للمقارنة: ${preset(cmpId)?.name}</p><div class="ds-frame" id="fB"></div><button class="btn sm primary block mt" data-pick="${cmpId}">اعتماد هذا</button></div></div>` : html`<div class="ds-frame" id="fA"></div>`}
           <p class="muted small">المعاينة تعرض المسودة فقط — الموقع لا يتغير للزوار قبل النشر.</p></div></div>
@@ -93,9 +96,9 @@ export default async function (main) {
           <label class="field"><span>سُمك الأيقونات</span><select class="select" data-tok="stroke">${[[1.5, 'رفيع'], [2, 'عادي'], [2.5, 'عريض']].map(([v, l]) => html`<option value="${v}" ${Number(t.stroke) === v ? 'selected' : ''}>${l}</option>`)}</select></label>
           <label class="field"><span>الحركة</span><select class="select" data-tok="motion">${[['normal', 'عادية'], ['strong', 'قوية'], ['off', 'إيقاف الحركات']].map(([v, l]) => html`<option value="${v}" ${t.motion === v ? 'selected' : ''}>${l}</option>`)}</select></label>
           <label class="field"><span>الوضع</span><select class="select" data-tok="mode">${[['dark', 'ليلي'], ['light', 'نهاري'], ['auto', 'حسب جهاز الزائر']].map(([v, l]) => html`<option value="${v}" ${t.mode === v ? 'selected' : ''}>${l}</option>`)}</select></label>
-        </div><p class="muted small">الجودة سقف أعلى: الأجهزة الضعيفة تنزل تلقائياً لتبقى سريعة، والزائر يستطيع تفعيل «الوضع الخفيف» من ذيل الموقع. الألوان والخلفيات وحركات الانتقال (100 حركة) في تبويب «المظهر والإعدادات».</p></details>
+        </div><button class="btn ghost sm mt" type="button" data-act="reset-tokens">↺ القيم الأصلية للخطوط والأحجام والجودة</button><p class="muted small">الجودة سقف أعلى: الأجهزة الضعيفة تنزل تلقائياً لتبقى سريعة، والزائر يستطيع تفعيل «الوضع الخفيف» من ذيل الموقع. الألوان والخلفيات وحركات الانتقال (100 حركة) في تبويب «المظهر والإعدادات».</p></details>
       <details class="card pad mt"><summary>${icon('clock')} سجل النشر والاستعادة (${S.history.length})</summary>
-        ${S.history.length ? S.history.map((h, i) => html`<div class="row between wrap mt"><span class="small">${new Date(h.at).toLocaleString('ar-IQ')} — <span class="ltr">${h.by || ''}</span> · ${Object.keys(h.design?.sections || {}).length} أقسام مخصّصة</span><button class="btn ghost sm" data-restore="${i}">استعادة ونشر</button></div>`) : html`<p class="muted small mt">لا يوجد نشر سابق بعد.</p>`}</details>`);
+        ${S.history.length ? S.history.map((h, i) => html`<div class="row between wrap mt"><span class="small">${new Date(h.at).toLocaleString('ar-IQ')} — <span class="ltr">${h.by || ''}</span> · ${Object.keys(h.design?.sections || {}).length} أقسام مخصّصة${h.look ? ' · مع الألوان' : ''}</span><button class="btn ghost sm" data-restore="${i}">استعادة ونشر</button></div>`) : html`<p class="muted small mt">لا يوجد نشر سابق بعد.</p>`}</details>`);
     requestAnimationFrame(fit);
     frames();
   }
@@ -125,8 +128,9 @@ export default async function (main) {
 
   // ---------- الأحداث ----------
   main.addEventListener('click', async (e) => {
-    const b = e.target.closest('[data-pick],[data-fav],[data-cmp],[data-sec-tab],[data-dev],[data-act],[data-restore],[data-bundle]');
+    const b = e.target.closest('[data-pick],[data-fav],[data-cmp],[data-sec-tab],[data-dev],[data-act],[data-restore],[data-bundle],[data-orig]');
     if (!b) return;
+    if (b.dataset.orig) { delete selMap()[sec]; save(); toast('رجع هذا القسم لشكله الأصلي — في المسودة', 'ok'); if (cmpId) { cmpId = null; return draw(); } return refresh(); }
     if (b.dataset.bundle) {
       const [, label, pack, tok] = BUNDLES.find((z) => z[0] === b.dataset.bundle);
       for (const k of Object.keys(SECTIONS)) { const p = PRESETS.find((z) => z.sec === k && z.pack === pack); if (p) draft.sections[k] = p.id; }
@@ -141,11 +145,23 @@ export default async function (main) {
     if (b.dataset.restore) {
       if (!(await confirmBox('استعادة هذا التصميم ونشره للجميع؟'))) return;
       busy(b, true);
-      try { const r = await api.post('/admin/design/restore', { index: Number(b.dataset.restore) }); Object.assign(S, { published: r.published, history: r.history }); draft = structuredClone(r.published); draft.tokens = { ...DEFAULT_TOKENS, ...draft.tokens }; applyDesign(r.published); toast('تمت الاستعادة والنشر ✅', 'ok'); draw(); }
+      try { const r = await api.post('/admin/design/restore', { index: Number(b.dataset.restore) }); Object.assign(S, { published: r.published, history: r.history }); draft = structuredClone(r.published); draft.tokens = { ...DEFAULT_TOKENS, ...draft.tokens }; if (r.site) { ctx.state.settings.site = r.site; ctx.applyTheme(r.site); } applyDesign(r.published); toast('تمت الاستعادة والنشر ✅', 'ok'); draw(); }
       catch (er) { toast(er.message, 'error'); busy(b, false); }
       return;
     }
     const act = b.dataset.act;
+    if (act === 'reset-tokens') { draft.tokens = { ...DEFAULT_TOKENS }; save(); toast('رجعت الخطوط والأحجام والجودة للقيم الأصلية — في المسودة', 'ok'); return draw(); }
+    if (act === 'reset-all') {
+      if (!(await confirmBox('إرجاع الموقع كاملاً لشكله الأصلي للجميع الآن؟ (الأقسام، الأزرار، الخطوط، الألوان، الخلفية، الحركات). النصوص والصور والمنتجات لا تتأثر، وتقدر ترجع للشكل الحالي من «سجل النشر».'))) return;
+      busy(b, true);
+      try {
+        const r = await api.post('/admin/design/reset', {});
+        Object.assign(S, { published: r.published, history: r.history }); draft = structuredClone(r.published); draft.tokens = { ...DEFAULT_TOKENS, ...draft.tokens }; cmpId = null;
+        ctx.state.settings.site = r.site; ctx.applyTheme(r.site); applyDesign(r.published);
+        toast('رجع الموقع لشكله الأصلي ✅ — والشكل السابق محفوظ في السجل', 'ok'); draw();
+      } catch (er) { toast(er.message, 'error'); busy(b, false); }
+      return;
+    }
     if (act === 'reset-sec') { delete selMap()[sec]; save(); return refresh(); }
     if (act === 'publish') {
       busy(b, true);
@@ -161,7 +177,7 @@ export default async function (main) {
   });
   main.addEventListener('input', (e) => {
     const t = e.target;
-    if (t.id === 'ds-q') { q = t.value.trim(); const g = $('.ds-grid', main); mount(g, html`${list().map(item)}`); requestAnimationFrame(fit); return; }
+    if (t.id === 'ds-q') { q = t.value.trim(); const g = $('.ds-grid', main); mount(g, html`${origItem()}${list().map(item)}`); requestAnimationFrame(fit); return; }
     if (t.dataset.tok) { const k = t.dataset.tok; draft.tokens[k] = ['radius', 'scale', 'space', 'glass', 'stroke'].includes(k) ? Number(t.value) : t.value; const lb = t.closest('label')?.querySelector('span b'); if (lb) lb.textContent = k === 'radius' ? `${t.value}px` : `${Math.round(t.value * 100)}%`; save(); }
   });
   main.addEventListener('change', async (e) => {

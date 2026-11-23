@@ -21,6 +21,14 @@ const akey = (x, d) => (typeof x === 'string' && /^[a-z0-9-]{2,32}$/.test(x) ? x
 const FA = ['cairo', 'tajawal', 'kufi', 'plex', 'readex', 'almarai', 'messiri', 'amiri', 'changa', 'system', 'naskh'];
 const FE = ['same', 'inter', 'montserrat', 'grotesk', 'exo', 'raleway', 'playfair', 'system', 'mono', 'serif'];
 const FH = ['same', 'lalezar', 'ruqaa', 'reem', 'messiri', 'amiri', 'changa', 'kufi', 'readex', 'orbitron', 'monoton', 'playfair', 'exo', 'grotesk', 'montserrat', 'raleway', 'inter'];
+// الشكل الأصلي للموقع (الألوان والخلفية وحركات الانتقال كما كانت عند الإطلاق)
+const LOOK0 = { colors: { primary: '#18b4ff', accent: '#8b5cf6', bg: '#05060b', text: '#e8ebf7', panel: '#0e1222' }, background: 'network', anim: { page: 'fade', reveal: 'up', auth: 'morph' } };
+const lookOf = (s) => ({ colors: s?.colors || null, background: s?.background || null, anim: s?.anim || null });
+const cleanLook = (l) => ({
+  ...(l?.colors && Object.values(l.colors).every((x) => /^#[0-9a-f]{6}$/i.test(x)) ? { colors: l.colors } : {}),
+  ...(['network', 'matrix', 'grid', 'image', 'video', 'plain'].includes(l?.background) ? { background: l.background } : {}),
+  ...(l?.anim && Object.values(l.anim).every((x) => /^[a-z0-9-]{2,32}$/.test(x)) ? { anim: l.anim } : {}),
+});
 const DS_SEC = ['header', 'hero', 'cats', 'cards', 'product', 'learn', 'account', 'auth', 'footer', 'buttons'];
 const dsId = (v) => (typeof v === 'string' && v.length <= 40 && /^[a-z]+-[a-z]+-[a-z]+$/.test(v) ? v : null);
 function designInput(v) {
@@ -534,14 +542,26 @@ export default function (add) {
     c.settingsCache.delete('__public');
     return { published: d, history: hist };
   });
+  const siteRow = async (c) => (await c.db.all("select value from settings where key = 'site'"))[0]?.value || {};
+  // ↺ الشكل الأصلي بالكامل: الأقسام والأزرار والخطوط والأحجام والجودة + الألوان والخلفية وحركات الانتقال.
+  // المحتوى (النصوص والصور والمنتجات) لا يتأثر، والشكل السابق يُحفظ في السجل للتراجع بضغطة
+  add('POST', '/admin/design/reset', 'admin', async (c) => {
+    const st = await dsState(c), d = designInput({}), site = await siteRow(c);
+    const nsite = { ...site, colors: { ...LOOK0.colors }, background: LOOK0.background, anim: { ...LOOK0.anim } };
+    const hist = [{ at: new Date().toISOString(), by: c.profile?.email || null, design: st.published, look: lookOf(site) }, ...st.history].slice(0, 20);
+    await c.db.tx([putSetting('design', d), putSetting('private:design_draft', d), putSetting('private:design_history', hist), putSetting('site', nsite), audit(c, 'design.reset', 'design')]);
+    c.settingsCache.delete('__public'); c.settingsCache.delete('site');
+    return { published: d, history: hist, site: nsite };
+  });
   add('POST', '/admin/design/restore', 'admin', async (c) => {
     const st = await dsState(c), i = int(c.body?.index, 0, 19, 'index'), h = st.history[i];
     if (!h) fail(404, 'not_found');
-    const d = designInput(h.design);
-    const hist = [{ at: new Date().toISOString(), by: c.profile?.email || null, design: st.published }, ...st.history.filter((_, j) => j !== i)].slice(0, 20);
-    await c.db.tx([putSetting('design', d), putSetting('private:design_draft', d), putSetting('private:design_history', hist), audit(c, 'design.restore', String(i))]);
-    c.settingsCache.delete('__public');
-    return { published: d, history: hist };
+    const d = designInput(h.design), site = h.look ? await siteRow(c) : null;
+    const nsite = site ? { ...site, ...cleanLook(h.look) } : null; // نسخة محفوظة مع ألوانها ⇒ ترجع الألوان أيضاً
+    const hist = [{ at: new Date().toISOString(), by: c.profile?.email || null, design: st.published, ...(site ? { look: lookOf(site) } : {}) }, ...st.history.filter((_, j) => j !== i)].slice(0, 20);
+    await c.db.tx([putSetting('design', d), putSetting('private:design_draft', d), putSetting('private:design_history', hist), ...(nsite ? [putSetting('site', nsite)] : []), audit(c, 'design.restore', String(i))]);
+    c.settingsCache.delete('__public'); if (nsite) c.settingsCache.delete('site');
+    return { published: d, history: hist, site: nsite };
   });
 
   add('GET', '/admin/notifications', 'admin', async (c) => {

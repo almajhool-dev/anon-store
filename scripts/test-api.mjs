@@ -328,6 +328,18 @@ ok('audit log records admin actions', (await api('/admin/audit', { token: admin.
   ok('design: restore previous design', rs.status === 200 && (await api('/settings')).data?.design?.sections?.hero === 'hero-center-glass');
   const [au] = await owner.query(`select count(*)::int as n from audit_log where action like 'design.%' and actor_id is not null`);
   ok('design: publish/restore logged with admin identity', au?.n >= 3, JSON.stringify(au));
+  // ↺ الشكل الأصلي بالكامل + التراجع
+  const sBefore = (await api('/settings')).data.site;
+  await api('/admin/settings/site', { method: 'PUT', token: admin.token, body: { value: { ...sBefore, colors: { primary: '#ff2d55', accent: '#ff7a1a', bg: '#070304', text: '#f7e9eb', panel: '#1a0b0e' }, background: 'matrix' } } });
+  ok('design reset is admin-only', (await api('/admin/design/reset', { method: 'POST', token: user.token, body: {}, ip: '198.51.100.23' })).status === 403);
+  const rz = await api('/admin/design/reset', { method: 'POST', token: admin.token, body: {} });
+  const pz = (await api('/settings')).data;
+  ok('reset → original look for everyone (no section designs, original colors/background/transitions)', rz.status === 200 && !Object.keys(pz.design?.sections || {}).length && pz.site.colors.primary === '#18b4ff' && pz.site.colors.panel === '#0e1222' && pz.site.background === 'network' && pz.site.anim?.page === 'fade' && pz.site.name === sBefore.name, JSON.stringify([rz.status, pz.site.colors, pz.site.background]));
+  ok('reset keeps previous look in history (with colors)', rz.data?.history?.[0]?.look?.colors?.primary === '#ff2d55' && rz.data.history[0].design?.sections?.hero === 'hero-center-glass', JSON.stringify(rz.data?.history?.[0]).slice(0, 160));
+  await api('/admin/design/restore', { method: 'POST', token: admin.token, body: { index: 0 } });
+  const pr = (await api('/settings')).data;
+  ok('one-tap undo: restore brings back the previous design AND colors', pr.design?.sections?.hero === 'hero-center-glass' && pr.site.colors.primary === '#ff2d55' && pr.site.background === 'matrix', JSON.stringify([pr.design?.sections?.hero, pr.site.colors?.primary]));
+  await api('/admin/settings/site', { method: 'PUT', token: admin.token, body: { value: { ...pr.site, colors: sBefore.colors, background: sBefore.background } } });
   ok('design: private draft/history never in public settings', !/design_draft|design_history/.test(JSON.stringify((await api('/settings')).data)));
   if (LOCAL) {
     // --- 🕸️ الفخاخ (3000 مؤشر) ---
