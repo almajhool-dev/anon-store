@@ -263,7 +263,10 @@ td .row { flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }
 
 /* تجاوب */
-@media (max-width: 1080px) { .nav a { padding: 7px 8px; font-size: .86rem; } }
+@media (max-width: 1240px) { .nav a { padding: 7px 8px; } }
+@media (max-width: 1080px) { .nav { display: none; } .menu-btn { display: inline-grid; } } /* الشاشات المتوسطة (آيباد أفقي): القائمة الجانبية بدل روابط مضغوطة */
+/* الروابط لا تنكسر لسطرين؛ إن ضاق العرض جداً تنزلق القائمة أفقياً بدل تشويه الرأس */
+.nav { min-width: 0; overflow-x: auto; scrollbar-width: none; } .nav::-webkit-scrollbar { display: none; } .nav a { white-space: nowrap; flex: none; }
 @media (max-width: 960px) {
   .nav, .hdr .hide-m { display: none; } .menu-btn { display: inline-grid; }
   .hero { grid-template-columns: 1fr; padding-top: 34px; text-align: center; } .hero p.lead { margin-inline: auto; } .hero .row { justify-content: center; }

@@ -16,6 +16,7 @@ import { startDesign, initQuality, applyDesign, currentDesign, lite } from './li
 import { startVitals } from './lib/vitals.js';
 import { startLiquid, refreshLiquid } from './lib/liquid.js';
 import { startUpdates, isStale } from './lib/update.js';
+import { modePicker, modeButton, startModePicker } from './lib/cmode.js';
 window.__boot = 1; // يقرؤه public/boot.js: الحزمة الأساسية حُمّلت
 const DSP = window.parent !== window && new URLSearchParams(location.search).has('dsp'); // داخل معاينة استوديو التصميم
 
@@ -72,7 +73,8 @@ export function applyTheme(site) {
   setFxTheme(c.primary || '#18b4ff', c.accent || '#8b5cf6', site.background || 'network', c.bg || '#05060b');
   bgVideo(site.background === 'video' ? site.background_video_url : null);
   if (site.favicon_url) $('link[rel=icon]').href = safeUrl(site.favicon_url);
-  $('meta[name=theme-color]')?.setAttribute('content', c.bg || '#05060b');
+  const tm = $('meta[name=theme-color]');
+  if (tm) { tm.dataset.dark = c.bg || '#05060b'; tm.content = document.body.dataset.mode === 'light' ? '#f5f7fb' : tm.dataset.dark; }
 }
 
 export async function refreshMe() {
@@ -110,6 +112,7 @@ function renderHeader() {
     <nav class="nav" aria-label="التنقل الرئيسي">${navItems().map(([h, t]) => html`<a href="${h}">${t}</a>`)}</nav>
     <div class="hdr-actions">
       <button class="icon-btn" data-search aria-label="بحث">${icon('search')}</button>
+      ${modeButton()}
       ${me ? html`${isAdmin() ? html`<a class="icon-btn" href="/admin" title="لوحة المدير" aria-label="لوحة المدير">${icon('shield')}</a>` : ''}
         <a class="icon-btn" href="/account#notifications" aria-label="الإشعارات">${icon('bell')}${state.unread ? html`<span class="dot">${state.unread > 99 ? '99+' : state.unread}</span>` : ''}</a>
         <a href="/account" class="hide-m" aria-label="حسابي">${ava}</a>`
@@ -122,7 +125,8 @@ function renderHeader() {
     ${navItems().map(([h, t, i]) => html`<a href="${h}">${icon(i)} ${t}</a>`)}
     <a href="/latest">${icon('bolt')} أحدث المنتجات</a><a href="/top">${icon('trend')} الأكثر تحميلاً</a>
     <a href="/contact">${icon('chat')} التواصل والدعم</a><a href="/faq">${icon('help')} الأسئلة الشائعة</a>
-    ${me ? html`<a href="/account">${icon('user')} حسابي</a>${isAdmin() ? html`<a href="/admin">${icon('shield')} لوحة المدير</a>` : ''}` : html`<a href="/login">${icon('key')} تسجيل الدخول</a>`}`);
+    ${me ? html`<a href="/account">${icon('user')} حسابي</a>${isAdmin() ? html`<a href="/admin">${icon('shield')} لوحة المدير</a>` : ''}` : html`<a href="/login">${icon('key')} تسجيل الدخول</a>`}
+    ${modePicker()}`);
   highlight();
 }
 
@@ -142,6 +146,7 @@ function renderLayout() {
     <div class="copy"><span>© ${new Date().getFullYear()} ${c.footer.text}</span><button type="button" class="lite-btn" data-lite aria-pressed="${lite() ? 'true' : 'false'}">⚡ <span>${lite() ? 'الوضع الخفيف مفعّل' : 'الوضع الخفيف'}</span></button><span class="ltr">Anonymous Programmer Store</span></div>
   </div></footer>`);
   renderHeader();
+  startModePicker();
   autoReveal($('#view'));
   const hdr = $('#hdr'), drawer = $('#drawer');
   hdr.addEventListener('click', (e) => {

@@ -1,6 +1,20 @@
+// يُحمَّل متزامناً في <head> ومخزّن سنة: عند تعديله غيّر ?v= في web/index.html
 // حارس الإقلاع: إن فشل تحميل حزمة الموقع (شبكة متقطعة أو خطأ مؤقت) نعيد المحاولة مرة تلقائياً،
 // ثم نعرض رسالة وزر إعادة المحاولة بدل صفحة فارغة. main.js يضع window.__boot عند تحميله.
 (function () {
+  // وضع الألوان قبل أول رسم (بلا وميض): اختيار الزائر ثم افتراضي الموقع المحفوظ (lib/design.js)
+  try {
+    var m = '';
+    if (!(window.parent !== window && /[?&]dsp/.test(location.search))) m = localStorage.getItem('cmode') || localStorage.getItem('cmode_site') || '';
+    if (m === 'system') m = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (m === 'light' || m === 'dark') {
+      var d = document.documentElement;
+      d.setAttribute('data-mode', m); d.style.colorScheme = m;
+      var put = function () { if (!document.body) return false; document.body.setAttribute('data-mode', m); return true; };
+      if (!put()) new MutationObserver(function (_, o) { if (put()) o.disconnect(); }).observe(d, { childList: true });
+    }
+  } catch (e) { /* تخزين غير متاح */ }
+
   function check() {
     if (window.__boot) return;
     var again = false;

@@ -66,6 +66,31 @@ export const BUNDLES = [
 
 let cur = {}, mo = null, mq = matchMedia('(max-width: 760px)'), dark = matchMedia('(prefers-color-scheme: dark)');
 const map = () => (cur.mobile_on && mq.matches ? { ...(cur.sections || {}), ...(cur.mobile || {}) } : cur.sections || {});
+const PREVIEW = window.parent !== window && new URLSearchParams(location.search).has('dsp');
+
+// 🌗 وضع الألوان (مثل Claude): اختيار الزائر على جهازه (النظام/داكن/فاتح) يتقدّم على الافتراضي الذي يضبطه المدير في الاستوديو.
+// public/boot.js يقرأ نفس المفتاحين قبل أول رسم فلا يومض الوضع الخطأ.
+export const MODES = ['system', 'dark', 'light'];
+const store = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* تخزين غير متاح */ } };
+export function userMode() {
+  if (PREVIEW) return ''; // معاينة الاستوديو تعرض مسودة المدير كما هي
+  try { const v = localStorage.getItem('cmode'); return MODES.includes(v) ? v : ''; } catch { return ''; }
+}
+const siteMode = (t) => (t.mode === 'auto' ? 'system' : t.mode === 'light' ? 'light' : 'dark');
+export const colorMode = () => userMode() || siteMode({ ...DEFAULT_TOKENS, ...(cur.tokens || {}) });
+export function setColorMode(m) {
+  store('cmode', MODES.includes(m) ? m : '');
+  applyDesign(cur);
+}
+function applyMode(t) {
+  const want = userMode() || siteMode(t), mode = want === 'system' ? (dark.matches ? 'dark' : 'light') : want;
+  const b = document.body, h = document.documentElement;
+  if (!PREVIEW) store('cmode_site', siteMode(t));
+  if (b.dataset.mode !== mode) { b.dataset.mode = mode; h.dataset.mode = mode; h.style.colorScheme = mode; }
+  const meta = document.querySelector('meta[name=theme-color]');
+  if (meta) meta.content = mode === 'light' ? '#f5f7fb' : meta.dataset.dark || '#05060b'; // لون شريط المتصفح يتبع الوضع
+  if (b.dataset.modePref !== want) { b.dataset.modePref = want; dispatchEvent(new CustomEvent('ds:mode', { detail: want })); }
+}
 
 function stamp(root = document) {
   const m = map();
@@ -91,7 +116,7 @@ export function applyDesign(d) {
   if (t.hs && t.hs !== 'normal') b.dataset.hs = t.hs; else delete b.dataset.hs;
   if (t.font_ar === 'tajawal' || t.font_head === 'tajawal') loadTajawal();
   b.dataset.motion = t.motion;
-  b.dataset.mode = t.mode === 'auto' ? (dark.matches ? 'dark' : 'light') : t.mode;
+  applyMode(t);
   const q = String(lite() ? 1 : Math.min(QL[t.quality] || 8, deviceCap()));
   if (b.dataset.q !== q) { b.dataset.q = q; dispatchEvent(new CustomEvent('ds:q', { detail: Number(q) })); }
   const btn = preset(map().buttons);
@@ -106,7 +131,8 @@ export function startDesign(d) {
   mo = new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1) stamp(n); });
   mo.observe(document.body, { childList: true, subtree: true });
   mq.addEventListener?.('change', () => applyDesign(cur));
-  dark.addEventListener?.('change', () => { if (cur.tokens?.mode === 'auto') applyDesign(cur); });
+  dark.addEventListener?.('change', () => { if (colorMode() === 'system') applyDesign(cur); });
+  addEventListener('storage', (e) => { if (e.key === 'cmode') applyDesign(cur); }); // تغيير الوضع من تبويب آخر
   // معاينة داخل استوديو التصميم (نافذة مضمّنة من نفس الموقع فقط)
   if (window.parent !== window && new URLSearchParams(location.search).has('dsp')) {
     addEventListener('message', (e) => { if (e.origin === location.origin && e.data?.type === 'ds') applyDesign(e.data.design); });
