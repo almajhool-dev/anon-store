@@ -312,6 +312,21 @@ ok('audit log records admin actions', (await api('/admin/audit', { token: admin.
   const c3 = await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, hero: { ...content.hero, image_anim: 'coin', logo_anim: 'coin' }, banners: [{ title: 'b', anim: 'coin' }], covers_anim: 'coin' } } });
   ok('content: 3D touch-rotate (coin) for hero, header logo, banners, covers', c3.data?.value?.hero?.image_anim === 'coin' && c3.data.value.hero.logo_anim === 'coin' && c3.data.value.banners[0].anim === 'coin' && c3.data.value.covers_anim === 'coin', JSON.stringify(c3.data).slice(0, 160));
   ok('content: unknown animation falls back safely', (await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, covers_anim: '<script>' } } })).data?.value?.covers_anim === 'none');
+  // --- استوديو التصميم ---
+  ok('design: normal user blocked from studio', (await api('/admin/design', { token: user.token, ip: '198.51.100.23' })).status === 403);
+  const dsd = await api('/admin/design/draft', { method: 'PUT', token: admin.token, body: { design: { sections: { hero: 'hero-center-glass', cards: 'cards-overlay-neon', bad: 'x', footer: '<script>' }, mobile_on: true, mobile: { hero: 'hero-bento-swiss' }, tokens: { radius: 99, scale: 3, mode: 'light', font_ar: 'evil' } }, favs: ['hero-center-glass', 'nope!'] } });
+  ok('design: draft saved + sanitized', dsd.status === 200 && dsd.data.draft.sections.hero === 'hero-center-glass' && !dsd.data.draft.sections.footer && dsd.data.draft.tokens.radius === 32 && dsd.data.draft.tokens.scale === 1.25 && dsd.data.draft.tokens.font_ar === 'cairo' && dsd.data.favs.length === 1, JSON.stringify(dsd.data).slice(0, 200));
+  ok('design: draft hidden from visitors until publish', !(await api('/settings')).data?.design?.sections?.cards);
+  const pub1 = await api('/admin/design/publish', { method: 'POST', token: admin.token, body: {} });
+  ok('design: publish → visible to visitors', pub1.status === 200 && (await api('/settings')).data?.design?.sections?.hero === 'hero-center-glass', pub1.status);
+  await api('/admin/design/draft', { method: 'PUT', token: admin.token, body: { design: { sections: { hero: 'hero-editorial-luxury' } } } });
+  const pub2 = await api('/admin/design/publish', { method: 'POST', token: admin.token, body: {} });
+  ok('design: history keeps previous version with time + admin', pub2.data?.history?.[0]?.design?.sections?.hero === 'hero-center-glass' && !!pub2.data.history[0].at, JSON.stringify(pub2.data?.history?.[0]).slice(0, 120));
+  const rs = await api('/admin/design/restore', { method: 'POST', token: admin.token, body: { index: 0 } });
+  ok('design: restore previous design', rs.status === 200 && (await api('/settings')).data?.design?.sections?.hero === 'hero-center-glass');
+  const [au] = await owner.query(`select count(*)::int as n from audit_log where action like 'design.%' and actor_id is not null`);
+  ok('design: publish/restore logged with admin identity', au?.n >= 3, JSON.stringify(au));
+  ok('design: private draft/history never in public settings', !/design_draft|design_history/.test(JSON.stringify((await api('/settings')).data)));
   if (LOCAL) {
     ok('honeypot path form → 404', (await api('/trap/wp-admin/setup.php', { ip: '203.0.113.77' })).status === 404);
     const [ev] = await owner.query(`select * from security_events order by created_at desc limit 1`);

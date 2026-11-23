@@ -15,7 +15,7 @@ export default async function (view, _m, { state, go, refreshMe, setTitle }) {
   const me = state.me;
   let tab = TABS.some(([t]) => t === location.hash.slice(1)) ? location.hash.slice(1) : 'purchases';
   let lib = null;
-  mount(view, html`<div class="container page">
+  mount(view, html`<div class="container page" data-sec="account">
     <div class="card profile glow">${me.avatar ? html`<img class="avatar" src="${safeUrl(me.avatar)}" alt="" referrerpolicy="no-referrer">` : html`<span class="avatar">${(me.name || '?')[0]}</span>`}
       <div class="grow"><h2>${me.name}</h2><p class="muted small ltr">${me.email}</p></div>
       <span class="badge ${me.role === 'user' ? '' : 'info'}">${{ user: 'مستخدم', admin: 'مدير', owner: 'المالك' }[me.role]}</span>

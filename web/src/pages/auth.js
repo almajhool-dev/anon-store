@@ -29,7 +29,7 @@ const otpBoxes = () => html`<div class="a-otp" dir="ltr">${[0, 1, 2, 3, 4, 5].ma
 export default async function (view, m, { state, go, setTitle }) {
   const next = new URLSearchParams(location.search).get('next') || '';
   const dest = /^\/(?![/\\])/.test(next) ? next : '/account';
-  if (auth.signedIn && state.me) { go(dest, true); return; }
+  if (auth.signedIn && state.me && !new URLSearchParams(location.search).has('dsp')) { go(dest, true); return; }
   const site = state.settings.site, closed = site.registration_enabled === false;
   let mode = m[1] === 'signup' ? 'signup' : m[1] === 'forgot' ? 'forgot' : 'signin', email = '', cooldown = 0, busyMorph = false;
 
@@ -61,7 +61,7 @@ export default async function (view, m, { state, go, setTitle }) {
       <p class="a-foot">لم يصلك؟ <button type="button" class="a-link" data-resend="forget-password">أعد الإرسال</button></p>`,
   };
 
-  mount(view, html`<section class="auth"><div class="a-bg" aria-hidden="true"><b></b><b></b><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  mount(view, html`<section class="auth" data-sec="auth"><div class="a-bg" aria-hidden="true"><b></b><b></b><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="a-stage"><span class="a-orb" aria-hidden="true"></span><div class="a-card">
       <a class="a-logo" href="/" aria-label="الرئيسية">${site.logo_url ? html`<img src="${safeUrl(site.logo_url)}" alt="">` : raw(LOGO)}</a>
       <div class="a-body"></div><p class="a-safe">${icon('shield')} اتصال مشفّر — كلمات السر لا تُحفظ إلا مُجزّأة</p></div></div></section>`);

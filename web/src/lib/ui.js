@@ -11,7 +11,7 @@ export function price(p, big = false) {
   return html`<span class="price${big ? ' big' : ''}">${saleOn(p) ? html`<s>${fmtPrice(p.price, p.currency)}</s>` : ''}<b>${fmtPrice(p.final_price ?? p.price, p.currency)}</b></span>`;
 }
 export const cover = (p) => (p.cover_url ? html`<img data-cover src="${safeUrl(p.cover_url)}" alt="" loading="lazy" decoding="async">` : art(p.kind, p.title));
-export const card = (p) => html`<a class="card pcard reveal" href="/p/${p.slug}">
+export const card = (p) => html`<a class="card pcard reveal" data-sec="cards" href="/p/${p.slug}">
   <div class="pcover">${cover(p)}<span class="badge kind">${KINDS[p.kind]?.label || ''}</span>${saleOn(p) ? html`<span class="badge sale">-${p.discount_percent}%</span>` : ''}${p.featured ? html`<span class="badge feat" title="مميز">${icon('star')}</span>` : ''}</div>
   <div class="pbody"><h3>${p.title}</h3><p class="muted clamp2">${p.summary || ''}</p>
   <div class="pmeta">${price(p)}<span class="muted small">${icon('download')} ${fmtNum(p.downloads)}${p.rating_count ? ` · ★ ${avgRating(p).toFixed(1)}` : ''}</span></div></div></a>`;

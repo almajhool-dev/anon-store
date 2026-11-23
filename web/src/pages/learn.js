@@ -20,7 +20,7 @@ export default async function (view, m, { setTitle, go }) {
   let lastSave = 0, retried = false, alive = true;
   const rate = Number(localStorage.getItem('anon-rate') || 1);
 
-  mount(view, html`<div class="container page"><p class="muted small"><a href="/p/${p.slug}">${icon('back')} ${p.title}</a></p>
+  mount(view, html`<div class="container page" data-sec="learn"><p class="muted small"><a href="/p/${p.slug}">${icon('back')} ${p.title}</a></p>
     <div class="split"><div><div class="card player glow"><video id="v" controls playsinline preload="metadata" controlsList="nodownload"></video>
       <div class="player-bar"><button class="btn sm" data-act="skip" data-s="-10">−10 ث</button><button class="btn sm" data-act="skip" data-s="10">+10 ث</button>
       <select class="select" id="rate" aria-label="سرعة التشغيل">${[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((r) => html`<option value="${r}" ${r === rate ? 'selected' : ''}>${r}×</option>`)}</select>

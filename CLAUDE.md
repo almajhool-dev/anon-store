@@ -14,6 +14,7 @@
 - النشر بلا أسرار: الدالة تستخدم `DATABASE_URL` المحقون من Neon، والمُحمِّل يتحقق من SHA-256 للحزمة.
 - المصادقة من الواجهة عبر `/api/auth` (وكيل Netlify إلى Neon Auth) لتكون الكوكيز طرفاً أول؛ في التطوير `AUTH_PROXY_TARGET` لـ Vite. رموز البريد محفوظة SHA-256 (الاختبار يسترجعها بالتجربة على الفرع فقط).
 - تحديد المعدل يُبطئ فقط (429) ولا يحظر (CGNAT في العراق)؛ الحظر التلقائي لأنماط الهجوم فقط.
+- استوديو التصميم: الأقسام تُعلَّم بـ `data-sec`، و`lib/design.js` يضع `data-lay`/`data-pack` (الأزرار: `body[data-bpack|bfx]`) من إعداد `design` العام؛ المسودة/السجل/المفضلة في `private:design_*` ولا تُنشر إلا عبر `/admin/design/publish|restore` (مع audit). المعاينة iframe بنفس النطاق `?dsp=1` + postMessage (لذا `frame-ancestors 'self'`).
 - المحتوى القابل للتعديل في `settings` (`content`, `pages`) ويُدمج مع `lib/content.js`؛ أيقونة الهاتف وصورة المشاركة بمفاتيح ثابتة `media/brand/app-icon|share`. قيم jsonb تُمرَّر `JSON.stringify` (عميل sql.js يحوّل المصفوفات لمصفوفات Postgres).
 
 ## الأوامر

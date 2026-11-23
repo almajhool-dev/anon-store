@@ -5,7 +5,7 @@ import { icon } from '../lib/art.js';
 import { loader, errorBox, empty } from '../lib/ui.js';
 
 const TABS = [['overview', 'نظرة عامة', 'chart'], ['products', 'المنتجات والكورسات', 'grid'], ['orders', 'الطلبات والمبيعات', 'cart'], ['users', 'المستخدمون', 'user'],
-  ['messages', 'الرسائل', 'mail'], ['notify', 'الإشعارات', 'bell'], ['storage', 'التخزين', 'disk'], ['settings', 'المظهر والإعدادات', 'sliders'], ['content', 'محتوى الموقع', 'edit'], ['pages', 'الصفحات والروابط', 'list'],
+  ['messages', 'الرسائل', 'mail'], ['notify', 'الإشعارات', 'bell'], ['storage', 'التخزين', 'disk'], ['settings', 'المظهر والإعدادات', 'sliders'], ['studio', 'استوديو التصميم', 'star'], ['content', 'محتوى الموقع', 'edit'], ['pages', 'الصفحات والروابط', 'list'],
   ['security', 'الأمان', 'shield'], ['audit', 'سجل العمليات', 'log']];
 export const table = (head, rows) => html`<div class="table-wrap"><table><thead><tr>${head.map((h) => html`<th>${h}</th>`)}</tr></thead><tbody>${rows}</tbody></table></div>`;
 const ORDER = { pending: ['بانتظار الدفع', 'warn'], paid: ['مدفوع', 'ok'], test: ['تجريبي', 'info'], cancelled: ['ملغي', ''], refunded: ['مسترجع', 'err'] };
@@ -173,6 +173,7 @@ export default async function (view, m, ctx) {
   try {
     if (tab === 'products') return await (await import('./products.js')).default(main, ctx);
     if (tab === 'settings') return await (await import('./settings.js')).default(main, ctx);
+    if (tab === 'studio') return await (await import('./studio.js')).default(main, ctx);
     if (tab === 'content' || tab === 'pages') return (await import('./content.js')).default(main, ctx, tab);
     await SIMPLE[tab](main, ctx);
   } catch (e) { mount(main, errorBox(e)); }

@@ -57,7 +57,7 @@ export default async function (view, m, { state, go, setTitle, isAdmin }) {
     if (!me.access && media && previews) cta = html`${cta}<a class="btn block" href="/learn/${p.slug}">${icon('eye')} شاهد الدروس المجانية (${previews})</a>`;
     if (!me.access && !free && isAdmin()) cta = html`${cta}<button class="btn ghost block" data-act="testbuy">${icon('shield')} شراء تجريبي (بيئة اختبار للمدير)</button>`;
 
-    mount(view, html`<div class="container page">
+    mount(view, html`<div class="container page" data-sec="product">
       <p class="muted small"><a href="/">الرئيسية</a> / <a href="${k.path}">${k.plural}</a> / ${p.title}</p>
       <div class="split">
         <div>

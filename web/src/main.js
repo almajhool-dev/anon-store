@@ -3,6 +3,7 @@ import '@fontsource-variable/cairo';
 import '@fontsource/tajawal/400.css';
 import '@fontsource/tajawal/700.css';
 import './styles.css';
+import './design.css';
 import { html, mount, $, $$, toast, safeUrl } from './lib/dom.js';
 import { api, auth, KINDS } from './lib/core.js';
 import { icon, logo } from './lib/art.js';
@@ -11,6 +12,8 @@ import { getContent, SECTIONS } from './lib/content.js';
 import { showIntro } from './lib/intro.js';
 import { auto3d } from './lib/spin3d.js';
 import { play } from './lib/transitions.js';
+import { startDesign } from './lib/design.js';
+const DSP = window.parent !== window && new URLSearchParams(location.search).has('dsp'); // داخل معاينة استوديو التصميم
 
 export const state = { settings: null, me: null, unread: 0 };
 const DEFAULT_SITE = { name: 'متجر المبرمج المجهول', name_en: 'Anonymous Programmer Store', tagline: '', colors: { primary: '#18b4ff', accent: '#8b5cf6', bg: '#05060b' }, sections: {}, registration_enabled: true, store_enabled: true, currency: 'USD' };
@@ -115,9 +118,9 @@ function renderHeader() {
 function renderLayout() {
   const s = state.settings.site, so = state.settings.social || {}, c = getContent(state);
   const fpages = (state.settings.pages || []).filter((p) => p.in_footer);
-  mount($('#app'), html`<header id="hdr" class="hdr"></header><div id="drawer" class="drawer"><nav aria-label="القائمة"></nav></div>
+  mount($('#app'), html`<header id="hdr" class="hdr" data-sec="header"></header><div id="drawer" class="drawer"><nav aria-label="القائمة"></nav></div>
   <main id="view" tabindex="-1"></main>
-  <footer class="ftr"><div class="container">
+  <footer class="ftr" data-sec="footer"><div class="container">
     <div class="cols">
       <div><a class="brand" href="/">${brandMark()}<span>${s.name}<small>${s.name_en || ''}</small></span></a><p class="muted small mt">${c.footer.about || s.tagline}</p>
         <div class="socials">${socialLinks(so).map(([u, ic, t]) => html`<a class="icon-btn" href="${u}" target="_blank" rel="noopener" aria-label="${t}">${icon(ic)}</a>`)}</div></div>
@@ -159,6 +162,7 @@ export async function go(path, replace = false) {
 async function render(scroll) {
   const id = ++navId, view = $('#view'), path = location.pathname;
   $('#drawer')?.classList.remove('open');
+  document.body.classList.remove('ds-on');
   $('.search-bar')?.classList.remove('open');
   for (const [re, load] of ROUTES) {
     const m = path.match(re);
@@ -186,7 +190,7 @@ function finish() {
   highlight();
   reveal($('#view'));
   clearTimeout(trackT);
-  trackT = setTimeout(() => api.post('/track', { path: location.pathname }).catch(() => {}), 800);
+  if (!DSP) trackT = setTimeout(() => api.post('/track', { path: location.pathname }).catch(() => {}), 800); // معاينة الاستوديو لا تُحسب زيارة
 }
 
 document.addEventListener('click', (e) => {
@@ -206,7 +210,8 @@ addEventListener('popstate', () => render(false));
   state.settings = { social: {}, faq: [], payments: {}, ...(settings || {}) };
   state.settings.site = { ...DEFAULT_SITE, ...(state.settings.site || {}) };
   applyTheme(state.settings.site);
-  showIntro(getContent(state).intro, state.settings.site);
+  startDesign(state.settings.design);
+  if (!DSP) showIntro(getContent(state).intro, state.settings.site);
   document.body.dataset.covers = getContent(state).covers_anim;
   auto3d();
   renderLayout();

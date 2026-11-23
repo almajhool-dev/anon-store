@@ -116,7 +116,7 @@ export const TRANSITIONS = L;
 const MAP = new Map(L.map((t) => [t.k, t]));
 const LEGACY = { slide: 'slide-left', zoom: 'zoom-in', flip: 'flip-x', up: 'slide-up' }; // أسماء الإعدادات القديمة
 export const resolveKey = (k) => (MAP.has(LEGACY[k] || k) ? LEGACY[k] || k : null);
-const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.body?.dataset.motion === 'off';
 
 export function play(el, key, { dur, delay = 0 } = {}) {
   const t = MAP.get(LEGACY[key] || key);

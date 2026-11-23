@@ -17,7 +17,7 @@ export default async function (view, _m, { state, setTitle }) {
   mount(view, html`
   ${c.show.banners && c.banners.length ? html`<section class="container section banners${c.banners.length > 1 ? ' slider' : ''}">${c.banners.map((b) => html`<div class="card banner-ad reveal">
     ${b.image_url ? html`<img class="ia-${b.anim || 'none'}" data-fx="${b.anim || 'none'}" src="${safeUrl(b.image_url)}" alt="" loading="lazy">` : ''}<div><h2>${b.title}</h2>${b.text ? html`<p>${b.text}</p>` : ''}${b.link ? btnLink(b.link, 'btn primary', b.button || 'اكتشف الآن') : ''}</div></div>`)}</section>` : ''}
-  <section class="container hero">
+  <section class="container hero" data-sec="hero">
     <div class="reveal">
       ${h.badge ? html`<span class="pill"><i></i> ${h.badge}</span>` : ''}
       <h1>${h.title} ${h.highlight ? html`<span class="gradient-text">${h.highlight}</span>` : ''}</h1>
@@ -28,7 +28,7 @@ export default async function (view, _m, { state, setTitle }) {
       ${h.show_terminal && h.terminal?.length ? html`<div class="card terminal glow"><header><i></i><i></i><i></i></header><pre id="term"></pre></div>` : ''}</div>
   </section>
   ${c.show.sections ? html`<section class="container section"><div class="section-head"><div><h2>الأقسام</h2><p class="muted">كل ما تحتاجه في مكان واحد</p></div></div>
-    <div class="cats">${cats.map((k) => { const x = c.sections[k]; return html`<a class="card cat reveal" href="${SECTIONS[k].path}"><div class="art-wrap ia-${x.anim || 'none'}" data-fx="${x.anim || 'none'}">${x.image_url ? html`<img class="art" src="${safeUrl(x.image_url)}" alt="" loading="lazy">` : art(k, x.title)}</div><div><b>${x.title}</b><span>${x.desc}</span></div></a>`; })}</div></section>` : ''}
+    <div class="cats" data-sec="cats">${cats.map((k) => { const x = c.sections[k]; return html`<a class="card cat reveal" href="${SECTIONS[k].path}"><div class="art-wrap ia-${x.anim || 'none'}" data-fx="${x.anim || 'none'}">${x.image_url ? html`<img class="art" src="${safeUrl(x.image_url)}" alt="" loading="lazy">` : art(k, x.title)}</div><div><b>${x.title}</b><span>${x.desc}</span></div></a>`; })}</div></section>` : ''}
   ${c.show.latest ? html`<section class="container section"><div class="section-head"><div><h2>${icon('bolt')} ${c.sections.latest.title}</h2></div><a class="btn ghost sm" href="/latest">عرض الكل ${icon('next')}</a></div><div id="latest">${skeleton(4)}</div></section>` : ''}
   ${c.show.top ? html`<section class="container section"><div class="section-head"><div><h2>${icon('trend')} ${c.sections.top.title}</h2></div><a class="btn ghost sm" href="/top">عرض الكل ${icon('next')}</a></div><div id="top">${skeleton(4)}</div></section>` : ''}
   ${c.show.features && c.features.length ? html`<section class="container section"><div class="features">${c.features.map((f) => html`<div class="card feature reveal">${f.image_url ? html`<img class="ic ia-${f.anim || 'none'}" data-fx="${f.anim || 'none'}" src="${safeUrl(f.image_url)}" alt="" loading="lazy">` : html`<span class="ic-wrap ia-${f.anim || 'none'}" data-fx="${f.anim || 'none'}">${icon(f.icon)}</span>`}<b>${f.title}</b><p>${f.text}</p></div>`)}</div></section>` : ''}

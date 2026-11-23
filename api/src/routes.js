@@ -10,7 +10,7 @@ const SORTS = {
   price_asc: 'effective_price(p) asc', price_desc: 'effective_price(p) desc',
 };
 const like = (s) => (s || '').trim().slice(0, 80).replace(/[%_\\]/g, '\\$&');
-const PUBLIC_SETTINGS = ['site', 'social', 'payments', 'faq', 'content', 'pages'];
+const PUBLIC_SETTINGS = ['site', 'social', 'payments', 'faq', 'content', 'pages', 'design'];
 
 export default function (add) {
   add('GET', '/health', 'none', () => ({ ok: true, time: new Date().toISOString() }));

@@ -15,6 +15,24 @@ const txt = (v, max, name = 'text') => str(v ?? '', max, { name });
 // الفيديو يُعرض فقط من تخزيننا (سياسة CSP: media-src)
 const ANIMS = ['none', 'coin', 'pulse', 'float', 'spin', 'bounce', 'glow', 'swing'];
 const akey = (x, d) => (typeof x === 'string' && /^[a-z0-9-]{2,32}$/.test(x) ? x : d); // اسم حركة من المكتبة
+// ---------- استوديو التصميم: مسودة خاصة ← نشر عام، سجل آخر 20 نشراً، مفضلة ----------
+const DS_SEC = ['header', 'hero', 'cats', 'cards', 'product', 'learn', 'account', 'auth', 'footer', 'buttons'];
+const dsId = (v) => (typeof v === 'string' && v.length <= 40 && /^[a-z]+-[a-z]+-[a-z]+$/.test(v) ? v : null);
+function designInput(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) fail(400, 'invalid_design');
+  const secs = (o) => Object.fromEntries(DS_SEC.map((k) => [k, dsId(o?.[k])]).filter(([, x]) => x));
+  const t = v.tokens || {}, pick = (x, l, d) => (l.includes(x) ? x : d);
+  const n = (x, a, b, d) => { const y = Number(x); return Number.isFinite(y) ? Math.min(b, Math.max(a, y)) : d; };
+  return { v: 1, sections: secs(v.sections), mobile: secs(v.mobile), mobile_on: v.mobile_on === true,
+    tokens: { font_ar: pick(t.font_ar, ['cairo', 'tajawal', 'system', 'naskh'], 'cairo'), font_en: pick(t.font_en, ['same', 'system', 'mono', 'serif'], 'same'), radius: n(t.radius, 0, 32, 12), scale: n(t.scale, 0.85, 1.25, 1), space: n(t.space, 0.75, 1.5, 1), glass: n(t.glass, 0.3, 1, 1), stroke: n(t.stroke, 1.25, 2.75, 2), motion: pick(t.motion, ['off', 'normal', 'strong'], 'normal'), mode: pick(t.mode, ['dark', 'light', 'auto'], 'dark') } };
+}
+const putSetting = (key, value) => ['insert into settings(key, value) values ($1, $2) on conflict (key) do update set value = excluded.value, updated_at = now()', [key, JSON.stringify(value)]];
+const DS_KEYS = ['design', 'private:design_draft', 'private:design_history', 'private:design_favs'];
+async function dsState(c) {
+  const rows = await c.db.all('select key, value from settings where key = any($1)', [DS_KEYS]);
+  const g = (k) => rows.find((r) => r.key === k)?.value;
+  return { published: g('design') || {}, draft: g('private:design_draft') || g('design') || {}, history: g('private:design_history') || [], favs: g('private:design_favs') || [] };
+}
 const ownMedia = (v, name) => { const u = httpsUrl(v, name); if (u && !u.startsWith(storage.mediaUrl(''))) fail(400, 'invalid_' + name); return u; };
 const link = (v) => {
   if (!v) return null;
@@ -468,6 +486,30 @@ export default function (add) {
     const st = ['read', 'closed', 'new'].includes(c.body?.status) ? c.body.status : fail(400, 'invalid_status');
     await c.db.one('update messages set status = $2 where id = $1', [bigId(c.params.id), st]);
     return { ok: true };
+  });
+
+  add('GET', '/admin/design', 'admin', async (c) => dsState(c));
+  add('PUT', '/admin/design/draft', 'admin', async (c) => {
+    const d = designInput(c.body?.design);
+    const favs = Array.isArray(c.body?.favs) ? [...new Set(c.body.favs.map(dsId).filter(Boolean))].slice(0, 200) : null;
+    await c.db.tx([putSetting('private:design_draft', d), ...(favs ? [putSetting('private:design_favs', favs)] : [])]);
+    return { draft: d, favs };
+  });
+  add('POST', '/admin/design/publish', 'admin', async (c) => {
+    const st = await dsState(c), d = designInput(st.draft);
+    const hist = [...(Object.keys(st.published).length ? [{ at: new Date().toISOString(), by: c.profile?.email || null, design: st.published }] : []), ...st.history].slice(0, 20);
+    await c.db.tx([putSetting('design', d), putSetting('private:design_draft', d), putSetting('private:design_history', hist), audit(c, 'design.publish', 'design', { sections: Object.keys(d.sections).length, mobile: d.mobile_on })]);
+    c.settingsCache.delete('__public');
+    return { published: d, history: hist };
+  });
+  add('POST', '/admin/design/restore', 'admin', async (c) => {
+    const st = await dsState(c), i = int(c.body?.index, 0, 19, 'index'), h = st.history[i];
+    if (!h) fail(404, 'not_found');
+    const d = designInput(h.design);
+    const hist = [{ at: new Date().toISOString(), by: c.profile?.email || null, design: st.published }, ...st.history.filter((_, j) => j !== i)].slice(0, 20);
+    await c.db.tx([putSetting('design', d), putSetting('private:design_draft', d), putSetting('private:design_history', hist), audit(c, 'design.restore', String(i))]);
+    c.settingsCache.delete('__public');
+    return { published: d, history: hist };
   });
 
   add('GET', '/admin/notifications', 'admin', async (c) => {
