@@ -44,6 +44,10 @@ export function applyTheme(site) {
   s.setProperty('--primary', c.primary || '#18b4ff');
   s.setProperty('--accent', c.accent || '#8b5cf6');
   s.setProperty('--bg', c.bg || '#05060b');
+  if (c.text && c.text !== '#e8ebf7') { s.setProperty('--text', c.text); s.setProperty('--muted', `color-mix(in srgb, ${c.text} 62%, ${c.bg || '#05060b'})`); } else { s.removeProperty('--text'); s.removeProperty('--muted'); }
+  if (c.panel && c.panel !== '#0e1222') { s.setProperty('--panel', `color-mix(in srgb, ${c.panel} 80%, transparent)`); s.setProperty('--panel-2', `color-mix(in srgb, ${c.panel} 92%, transparent)`); } else { s.removeProperty('--panel'); s.removeProperty('--panel-2'); }
+  document.body.dataset.pt = site.anim?.page || 'fade';
+  document.body.dataset.reveal = site.anim?.reveal || 'up';
   document.body.dataset.font = site.font || 'Cairo';
   document.body.dataset.bg = site.background || 'network';
   if (site.background === 'image' && site.background_url) s.setProperty('--bg-image', `url("${safeUrl(site.background_url)}")`);
@@ -69,7 +73,7 @@ export const setTitle = (t) => { document.title = t ? `${t} | ${state.settings.s
 function navItems() {
   const sec = state.settings.site.sections || {}, c = getContent(state);
   const ic = { python: 'terminal', apk: 'phone', course: 'cap', video: 'play', file: 'folder' };
-  const items = [['/', 'الرئيسية', 'home'], ...Object.keys(ic).filter((k) => sec[k] !== false).map((k) => [SECTIONS[k].path, c.sections[k].nav, ic[k]]),
+  const items = [['/', 'الرئيسية', 'home'], ...Object.keys(ic).filter((k) => sec[k] !== false).map((k) => [SECTIONS[k].path, c.sections[k].nav, c.sections[k].icon || ic[k]]),
     ['/free', c.sections.free.nav, 'gift'], ['/paid', c.sections.paid.nav, 'gem']];
   for (const p of state.settings.pages || []) if (p.in_nav) items.push([p.url || '/page/' + p.slug, p.title, 'list']);
   return items;
@@ -160,7 +164,8 @@ async function render(scroll) {
       cleanup = null;
       view.innerHTML = '';
       if (scroll) scrollTo({ top: 0 });
-      cleanup = await mod.default(view, m, { state, go, refreshMe, setTitle, isAdmin, applyTheme });
+      cleanup = await mod.default(view, m, { state, go, refreshMe, setTitle, isAdmin, applyTheme, renderHeader });
+      view.classList.remove('pt'); void view.offsetWidth; view.classList.add('pt'); // حركة الانتقال بين الصفحات
     } catch (e) {
       console.error(e);
       if (id === navId) mount(view, html`<div class="container page"><div class="empty card">${icon('shield')}<p>${e.message || 'تعذر تحميل الصفحة'}</p><a class="btn ghost sm" href="/">الرئيسية</a></div></div>`);

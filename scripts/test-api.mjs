@@ -273,6 +273,29 @@ ok('audit log records admin actions', (await api('/admin/audit', { token: admin.
   ok('upload: iOS .ipa accepted', (await upload(admin.token, free.data.id, 'app.ipa', ipa)).done?.status === 200);
   const dl = await api(`/download/${free.data.id}`, { method: 'POST', body: {} });
   ok('download link valid ≥15 min (longer for big files)', dl.status === 200 && dl.data.expires_in >= 900, JSON.stringify(dl.data).slice(0, 120));
+  // --- تشفير البيانات الخاصة + تنبيه جهاز جديد + ثيمات وحركات وأيقونات ---
+  const secret = 'رسالة سرية للتشفير 987';
+  ok('contact message accepted', (await api('/messages', { method: 'POST', token: user.token, body: { name: 'QA', email: 'qa-secret@example.com', subject: 'تشفير', body: secret, t: 4000 }, ip: '198.51.100.41' })).status === 200);
+  const [row] = await owner.query(`select id, body, email from messages order by id desc limit 1`);
+  ok('message stored encrypted at rest (AES-256-GCM)', row?.body?.startsWith('enc1:') && row?.email?.startsWith('enc1:') && !row.body.includes('سرية'), JSON.stringify(row).slice(0, 120));
+  const am = (await api('/admin/messages', { token: admin.token })).data?.items?.find((m) => String(m.id) === String(row?.id));
+  ok('admin reads decrypted message', am?.body === secret && am?.email === 'qa-secret@example.com', JSON.stringify(am).slice(0, 120));
+  const rp = await api(`/admin/messages/${row?.id}/reply`, { method: 'POST', token: admin.token, body: { reply: 'رد سري 555' } });
+  const [rr] = await owner.query(`select reply from messages where id = $1`, [row?.id]);
+  const un = (await api('/me/notifications', { token: user.token })).data?.items?.find((n) => n.body === 'رد سري 555');
+  ok('reply encrypted in DB, readable by the user', rp.status === 200 && rr?.reply?.startsWith('enc1:') && !!un, `${rp.status} ${String(rr?.reply).slice(0, 20)} ${!!un}`);
+  let keyHidden = false;
+  try { await owner.batch([['set local role store_api'], ['select value from ops.secrets']]); } catch { keyHidden = true; }
+  ok('store_api role cannot read the encryption key', keyHidden);
+  await api('/me', { token: admin.token, headers: { 'user-agent': 'Mozilla/5.0 (QA-Tablet; Linux) Firefox/120.0' } });
+  const [dev] = await owner.query(`select count(*)::int as n from security_events where kind = 'admin_new_device'`);
+  ok('owner alerted on admin login from a new device', dev?.n > 0, JSON.stringify(dev));
+  const th = await putSite({ colors: { ...site0.colors, text: '#f7e9eb', panel: '#1a0b0e' }, anim: { page: 'zoom', reveal: 'flip' } });
+  ok('site: text/card colors + page/reveal animations saved', th.data?.value?.colors?.panel === '#1a0b0e' && th.data.value.anim.page === 'zoom' && th.data.value.anim.reveal === 'flip', JSON.stringify(th.data).slice(0, 160));
+  ok('site: invalid color rejected', (await putSite({ colors: { ...site0.colors, text: 'red;}' } })).status === 400);
+  await putSite({});
+  const ci = await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, features: [{ icon: 'bolt', title: 'سريع', text: '', anim: 'pulse', image_url: 'https://example.com/i.gif' }], sections: { python: { title: 'أدوات', nav: 'بايثون', desc: '', icon: 'code', anim: 'float' } } } } });
+  ok('content: animated feature icons + section icons saved', ci.data?.value?.features?.[0]?.anim === 'pulse' && ci.data.value.sections.python.icon === 'code' && ci.data.value.sections.python.anim === 'float', JSON.stringify(ci.data).slice(0, 160));
   if (LOCAL) {
     ok('honeypot path form → 404', (await api('/trap/wp-admin/setup.php', { ip: '203.0.113.77' })).status === 404);
     const [ev] = await owner.query(`select * from security_events order by created_at desc limit 1`);

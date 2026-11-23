@@ -16,9 +16,14 @@ export default function (add) {
   add('GET', '/health', 'none', () => ({ ok: true, time: new Date().toISOString() }));
 
   add('GET', '/settings', 'none', async (c) => {
+    // التغييرات تظهر للزوار فوراً: المتصفح يتحقق كل مرة، والخادم يخزّن 10 ثوانٍ فقط لتحمّل الضغط
+    c.cache = 'no-cache';
+    const hit = c.settingsCache.get('__public');
+    if (hit && hit.at > Date.now() - 10000) return hit.v;
     const rows = await c.db.all('select key, value from settings where key = any($1)', [PUBLIC_SETTINGS]);
-    c.cache = 'public, max-age=60';
-    return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    const v = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    c.settingsCache.set('__public', { v, at: Date.now() });
+    return v;
   });
 
   add('GET', '/products', 'optional', async (c) => {
@@ -73,7 +78,7 @@ export default function (add) {
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'invalid_email');
     const subject = str(b.subject, 200, { min: 2, name: 'subject' });
     const body = str(b.body, 5000, { min: 5, name: 'body' });
-    await c.db.one('insert into messages(user_id, name, email, subject, body, ip) values ($1, $2, $3, $4, $5, $6)', [c.uid, name, email, subject, body, c.ip]);
+    await c.db.one('insert into messages(user_id, name, email, subject, body, ip) values ($1, $2, $3, $4, $5, $6)', [c.uid, name, await c.seal(email), subject, await c.seal(body), c.ip]);
     return { ok: true };
   }, { rl: ['msg', 5, 600000] });
 
@@ -101,11 +106,13 @@ export default function (add) {
     return { purchases, downloads, favorites };
   });
 
-  add('GET', '/me/notifications', 'user', async (c) => ({
-    items: await c.db.all(`select n.id, n.kind, n.title, n.body, n.created_at,
+  add('GET', '/me/notifications', 'user', async (c) => {
+    const items = await c.db.all(`select n.id, n.kind, n.title, n.body, n.created_at,
       exists(select 1 from notification_reads r where r.notification_id = n.id and r.user_id = app_uid()) as read
-      from notifications n order by n.created_at desc limit 50`),
-  }));
+      from notifications n order by n.created_at desc limit 50`);
+    for (const n of items) n.body = await c.open(n.body);
+    return { items };
+  });
 
   add('POST', '/me/notifications/read', 'user', async (c) => {
     await c.db.one('insert into notification_reads(user_id, notification_id) select app_uid(), n.id from notifications n on conflict do nothing');

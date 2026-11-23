@@ -7,6 +7,28 @@ import { uploadImage, uploadVideo, insertAtCursor, IMAGE_ACCEPT, VIDEO_ACCEPT } 
 import { showIntro } from '../lib/intro.js';
 
 const ICONS = ['shield', 'lock', 'play', 'cart', 'bolt', 'star', 'heart', 'gift', 'gem', 'code', 'terminal', 'phone', 'cap', 'folder', 'download', 'upload', 'chat', 'send', 'mail', 'eye', 'check', 'clock', 'chart', 'key', 'help', 'grid', 'trend', 'user', 'bell', 'music', 'list', 'disk'];
+const ICON_AR = { shield: 'درع', lock: 'قفل', play: 'تشغيل', cart: 'سلة', bolt: 'برق', star: 'نجمة', heart: 'قلب', gift: 'هدية', gem: 'جوهرة', code: 'كود', terminal: 'طرفية', phone: 'هاتف', cap: 'قبعة تخرج', folder: 'مجلد', download: 'تنزيل', upload: 'رفع', chat: 'دردشة', send: 'إرسال', mail: 'بريد', eye: 'عين', check: 'علامة صح', clock: 'ساعة', chart: 'رسم بياني', key: 'مفتاح', help: 'مساعدة', grid: 'شبكة', trend: 'صعود', user: 'مستخدم', bell: 'جرس', music: 'موسيقى', list: 'قائمة', disk: 'قرص' };
+const ANIMS = [['none', 'ثابتة'], ['pulse', 'نبض'], ['float', 'طفو'], ['bounce', 'قفز'], ['spin', 'دوران'], ['glow', 'توهج'], ['swing', 'تأرجح']];
+const iconOpts = (cur, def) => html`${def ? html`<option value="">افتراضية</option>` : ''}${ICONS.map((n) => html`<option value="${n}" ${cur === n ? 'selected' : ''}>${ICON_AR[n] || n}</option>`)}`;
+const animOpts = (cur) => ANIMS.map(([v, t]) => html`<option value="${v}" ${(cur || 'none') === v ? 'selected' : ''}>${t}</option>`);
+
+// صورة مشاركة الرابط تُصنع تلقائياً من الشعار واسم الموقع وألوانه (1200×630)
+async function shareCard(file, site) {
+  const bmp = await createImageBitmap(file), W = 1200, H = 630, col = site.colors || {};
+  const cv = Object.assign(document.createElement('canvas'), { width: W, height: H }), g = cv.getContext('2d');
+  g.fillStyle = col.bg || '#05060b'; g.fillRect(0, 0, W, H);
+  for (const [x, y, cc] of [[960, 110, col.accent || '#8b5cf6'], [160, 560, col.primary || '#18b4ff']]) {
+    const gr = g.createRadialGradient(x, y, 0, x, y, 560); gr.addColorStop(0, cc + '55'); gr.addColorStop(1, cc + '00'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  }
+  const k = Math.min(360 / bmp.width, 360 / bmp.height), w = bmp.width * k, h = bmp.height * k;
+  g.drawImage(bmp, W - 100 - w, (H - h) / 2, w, h); bmp.close?.();
+  const font = getComputedStyle(document.body).fontFamily, x = W - 160 - w, max = x - 70;
+  g.textAlign = 'right'; g.direction = 'rtl'; g.fillStyle = col.text || '#ffffff';
+  g.font = `800 62px ${font}`; g.fillText(site.name || '', x, H / 2 - 8, max);
+  g.font = `400 30px ${font}`; g.globalAlpha = 0.75; g.fillText(site.name_en || location.host, x, H / 2 + 46, max);
+  const blob = await new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.9));
+  return new File([blob], 'share.jpg', { type: 'image/jpeg' });
+}
 const SHOW = { banners: 'البنرات الإعلانية', sections: 'بطاقات الأقسام', latest: 'أحدث المنتجات', top: 'الأكثر تحميلاً', features: 'المميزات', contact: 'قسم التواصل' };
 const get = (o, p) => p.split('.').reduce((a, k) => a?.[k], o);
 function set(o, p, v) { const ks = p.split('.'), last = ks.pop(); const t = ks.reduce((a, k) => (a[k] ??= {}), o); t[last] = v; }
@@ -24,12 +46,20 @@ function contentEditor(main, ctx) {
   const c = structuredClone(getContent(ctx.state));
   let v = Date.now();
   const draw = () => {
-    const h = c.hero;
+    const h = c.hero, site = ctx.state.settings.site || {};
     mount(main, html`<h2>محتوى الموقع</h2><p class="muted small">كل نص وصورة في الصفحة الرئيسية والأقسام قابلة للتعديل. الصور تُرفع من الهاتف مباشرة وتُصغَّر تلقائياً. لا تنسَ الضغط على «حفظ» بالأسفل.</p>
-    <div class="card pad"><h3>${icon('phone')} أيقونة الموقع وصورة المشاركة</h3>
+    <div class="card pad"><h3>${icon('star')} هوية الموقع: الاسم والشعار</h3>
+      <div class="fgrid"><label class="field"><span>اسم الموقع</span><input class="input" id="id-name" maxlength="80" value="${site.name || ''}"></label><label class="field"><span>الاسم بالإنجليزي</span><input class="input ltr" id="id-name-en" maxlength="80" value="${site.name_en || ''}"></label></div>
+      <label class="field"><span>الوصف المختصر</span><input class="input" id="id-tagline" maxlength="220" value="${site.tagline || ''}"></label>
+      <button type="button" class="btn sm" data-act="identity">${icon('check')} حفظ الاسم والوصف</button>
+      <div class="field mt"><span>شعار الموقع — يظهر أعلى الموقع وفي الواجهة الرئيسية</span><div class="img-pick">${site.logo_url ? html`<img src="${safeUrl(site.logo_url)}" alt="" class="sq">` : html`<span class="muted small">الشعار الافتراضي</span>`}
+        <label class="btn primary sm">${icon('upload')} تغيير الشعار<input type="file" accept="${IMAGE_ACCEPT}" data-logo hidden></label></div></div>
+      <label class="switch"><input type="checkbox" id="logo-all" checked> استخدم نفس الشعار لأيقونة المتصفح وأيقونة الهاتف وصورة مشاركة الرابط</label>
+      <details class="mt"><summary>أيقونة الهاتف وصورة المشاركة بشكل منفصل</summary>
       <div class="field"><span>أيقونة الموقع على شاشة الهاتف (تُقص مربعة تلقائياً)</span><div class="img-pick"><img src="${BRAND.appIcon}?v=${v}" alt="" class="sq"><label class="btn sm">${icon('upload')} تغيير الأيقونة<input type="file" accept="${IMAGE_ACCEPT}" data-brand="app_icon" hidden></label></div></div>
       <div class="field"><span>صورة المشاركة (تظهر عند إرسال رابط الموقع في واتساب وتيليجرام — يفضّل 1200×630)</span><div class="img-pick"><img src="${BRAND.share}?v=${v}" alt=""><label class="btn sm">${icon('upload')} تغيير الصورة<input type="file" accept="${IMAGE_ACCEPT}" data-brand="share" hidden></label></div></div>
-      <p class="muted small">الشعار وأيقونة المتصفح والألوان والخلفية في تبويب «المظهر والإعدادات». هاتان الصورتان تُحفظان فوراً عند الرفع.</p></div>
+      <p class="muted small">واتساب يحتفظ بمعاينة الرابط القديمة لبعض الوقت، والمشاركات الجديدة تظهر بالصورة الجديدة.</p></details>
+      <p class="muted small">الألوان والثيمات والخطوط والخلفيات والحركات في تبويب <a href="/admin/settings">«المظهر والإعدادات»</a>.</p></div>
 
     <div class="card pad mt"><h3>${icon('play')} شاشة الدخول المتحركة</h3>
       <label class="switch"><input type="checkbox" data-path="intro.enabled" ${c.intro.enabled ? 'checked' : ''}> تفعيل شاشة دخول متحركة عند فتح الموقع</label>
@@ -58,11 +88,11 @@ function contentEditor(main, ctx) {
 
     <div class="card pad mt"><h3>${icon('grid')} الأقسام: الأسماء والأوصاف والصور</h3>${Object.keys(SECTIONS).map((k) => html`<div class="upl"><b>${SECTIONS[k].nav}</b>
       <div class="fgrid">${field('الاسم في القائمة', `sections.${k}.nav`, c.sections[k].nav, { max: 30 })}${field('العنوان', `sections.${k}.title`, c.sections[k].title, { max: 60 })}</div>
-      ${field('الوصف', `sections.${k}.desc`, c.sections[k].desc, { max: 200 })}${imgField('صورة القسم (مصغّرة)', `sections.${k}.image_url`, c.sections[k].image_url, 'تُستخدم الرسمة الافتراضية')}</div>`)}</div>
+      ${field('الوصف', `sections.${k}.desc`, c.sections[k].desc, { max: 200 })}<div class="fgrid"><label class="field"><span>أيقونة القائمة</span><select class="select" data-path="sections.${k}.icon">${iconOpts(c.sections[k].icon, true)}</select></label><label class="field"><span>حركة الصورة</span><select class="select" data-path="sections.${k}.anim">${animOpts(c.sections[k].anim)}</select></label></div>${imgField('صورة القسم (مصغّرة)', `sections.${k}.image_url`, c.sections[k].image_url, 'تُستخدم الرسمة الافتراضية')}</div>`)}</div>
 
     <div class="card pad mt"><div class="row between wrap"><h3>${icon('check')} المميزات</h3><button type="button" class="btn sm" data-act="add" data-list="features" ${c.features.length >= 8 ? 'disabled' : ''}>${icon('plus')} ميزة</button></div>
-      ${c.features.map((f, i) => html`<div class="upl"><div class="fgrid"><label class="field"><span>الأيقونة</span><select class="select" data-path="features.${i}.icon">${ICONS.map((n) => html`<option value="${n}" ${f.icon === n ? 'selected' : ''}>${n}</option>`)}</select></label>
-        ${field('العنوان', `features.${i}.title`, f.title, { max: 60 })}</div>${field('النص', `features.${i}.text`, f.text, { max: 200 })}${listBtns('features', i, c.features.length)}</div>`)}</div>
+      ${c.features.map((f, i) => html`<div class="upl"><div class="fgrid"><label class="field"><span>الأيقونة</span><select class="select" data-path="features.${i}.icon">${iconOpts(f.icon)}</select></label><label class="field"><span>الحركة</span><select class="select" data-path="features.${i}.anim">${animOpts(f.anim)}</select></label>
+        ${field('العنوان', `features.${i}.title`, f.title, { max: 60 })}</div>${field('النص', `features.${i}.text`, f.text, { max: 200 })}${imgField('أو صورة/GIF متحرك كأيقونة (اختياري)', `features.${i}.image_url`, f.image_url)}${listBtns('features', i, c.features.length)}</div>`)}</div>
 
     <div class="card pad mt"><h3>${icon('eye')} إظهار وإخفاء أجزاء الصفحة الرئيسية</h3><div class="row wrap gap">${Object.entries(SHOW).map(([k, t]) => html`<label class="switch"><input type="checkbox" data-path="show.${k}" ${c.show[k] ? 'checked' : ''}> ${t}</label>`)}</div></div>
 
@@ -82,7 +112,20 @@ function contentEditor(main, ctx) {
     if (!t.files?.length) return;
     try {
       toast('جارٍ رفع الصورة…');
-      if (t.dataset.brand) { await uploadImage(t.files[0], { purpose: t.dataset.brand }); v = Date.now(); toast('تم تحديث الصورة ✅', 'ok'); }
+      if ('logo' in t.dataset) {
+        // شعار واحد يغيّر كل شيء: أعلى الموقع، الواجهة، أيقونة المتصفح، أيقونة الهاتف، وصورة المشاركة
+        const f = t.files[0], all = $('#logo-all', main)?.checked;
+        const s = { ...ctx.state.settings.site, logo_url: await uploadImage(f, { max: 1024 }) };
+        if (all) {
+          s.favicon_url = await uploadImage(f, { max: 256, type: 'image/png' });
+          await uploadImage(f, { purpose: 'app_icon' });
+          await uploadImage(await shareCard(f, s), { purpose: 'share' });
+          v = Date.now();
+        }
+        const r = await api.put('/admin/settings/site', { value: s });
+        ctx.state.settings.site = r.value; ctx.applyTheme?.(r.value); ctx.renderHeader?.();
+        toast('تم تغيير الشعار ✅ — ظاهر الآن في الموقع للجميع', 'ok');
+      } else if (t.dataset.brand) { await uploadImage(t.files[0], { purpose: t.dataset.brand }); v = Date.now(); toast('تم تحديث الصورة ✅', 'ok'); }
       else if (t.dataset.vid) { set(c, t.dataset.vid, await uploadVideo(t.files[0])); if (t.dataset.vid === 'intro.media_url') c.intro.media_type = 'video'; toast('تم رفع الفيديو — اضغط «حفظ كل التغييرات»', 'ok'); }
       else { set(c, t.dataset.img, await uploadImage(t.files[0])); if (t.dataset.img === 'intro.media_url') c.intro.media_type = 'image'; toast('تم الرفع — اضغط «حفظ كل التغييرات»', 'ok'); }
       draw();
@@ -90,6 +133,15 @@ function contentEditor(main, ctx) {
   });
   actions(main, {
     intro: () => showIntro(c.intro, ctx.state.settings.site, { force: true }),
+    identity: async (b) => {
+      busy(b, true);
+      try {
+        const s = { ...ctx.state.settings.site, name: $('#id-name', main).value.trim(), name_en: $('#id-name-en', main).value.trim(), tagline: $('#id-tagline', main).value.trim() };
+        const r = await api.put('/admin/settings/site', { value: s });
+        ctx.state.settings.site = r.value; ctx.renderHeader?.();
+        toast('تم حفظ الاسم ✅ — ظاهر للزوار الآن', 'ok');
+      } catch (er) { toast(er.message, 'error'); } finally { busy(b, false); }
+    },
     imgdel: (b) => { set(c, b.dataset.path, null); draw(); },
     add: (b) => { c[b.dataset.list].push(b.dataset.list === 'banners' ? { image_url: null, title: 'عنوان البنر', text: '', button: '', link: '' } : { icon: 'star', title: 'ميزة جديدة', text: '' }); draw(); },
     del: async (b) => { if (await confirmBox('حذف هذا العنصر؟', { danger: true, ok: 'حذف' })) { c[b.dataset.list].splice(Number(b.dataset.i), 1); draw(); } },

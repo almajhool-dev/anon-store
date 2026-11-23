@@ -13,6 +13,7 @@ const hex = (v) => (/^#[0-9a-f]{6}$/i.test(v || '') ? v : fail(400, 'invalid_col
 const bool = (v) => v === true;
 const txt = (v, max, name = 'text') => str(v ?? '', max, { name });
 // الفيديو يُعرض فقط من تخزيننا (سياسة CSP: media-src)
+const ANIMS = ['none', 'pulse', 'float', 'spin', 'bounce', 'glow', 'swing'], PT = ['none', 'fade', 'slide', 'zoom', 'flip'], RV = ['none', 'up', 'fade', 'zoom', 'slide', 'flip'];
 const ownMedia = (v, name) => { const u = httpsUrl(v, name); if (u && !u.startsWith(storage.mediaUrl(''))) fail(400, 'invalid_' + name); return u; };
 const link = (v) => {
   if (!v) return null;
@@ -62,8 +63,9 @@ function settingInput(key, v) {
     return {
       name: str(v.name, 80, { min: 2, name: 'name' }), name_en: str(v.name_en ?? '', 80, { name: 'name_en' }),
       tagline: str(v.tagline ?? '', 220, { name: 'tagline' }),
-      colors: { primary: hex(v.colors?.primary), accent: hex(v.colors?.accent), bg: hex(v.colors?.bg) },
+      colors: { primary: hex(v.colors?.primary), accent: hex(v.colors?.accent), bg: hex(v.colors?.bg), text: v.colors?.text ? hex(v.colors.text) : '#e8ebf7', panel: v.colors?.panel ? hex(v.colors.panel) : '#0e1222' },
       font: ['Cairo', 'Tajawal', 'system'].includes(v.font) ? v.font : 'Cairo',
+      anim: { page: PT.includes(v.anim?.page) ? v.anim.page : 'fade', reveal: RV.includes(v.anim?.reveal) ? v.anim.reveal : 'up' },
       background: ['network', 'matrix', 'grid', 'image', 'video', 'plain'].includes(v.background) ? v.background : 'network',
       background_url: httpsUrl(v.background_url, 'background_url'), background_video_url: ownMedia(v.background_video_url, 'background_video_url'), logo_url: httpsUrl(v.logo_url, 'logo_url'),
       favicon_url: httpsUrl(v.favicon_url, 'favicon_url'), announcement: str(v.announcement ?? '', 300, { name: 'announcement' }),
@@ -91,8 +93,8 @@ function settingInput(key, v) {
       hero: { badge: txt(h.badge, 60), title: txt(h.title, 120), highlight: txt(h.highlight, 120), subtitle: txt(h.subtitle, 300),
         cta1_text: txt(h.cta1_text, 40), cta1_link: link(h.cta1_link), cta2_text: txt(h.cta2_text, 40), cta2_link: link(h.cta2_link),
         image_url: httpsUrl(h.image_url, 'image_url'), show_terminal: h.show_terminal !== false, terminal: list(h.terminal, 8, 'terminal').map((x) => txt(x, 90)) },
-      sections: Object.fromEntries(SECTION_KEYS.map((k) => { const x = v.sections?.[k] || {}; return [k, { title: txt(x.title, 60), nav: txt(x.nav, 30), desc: txt(x.desc, 200), image_url: httpsUrl(x.image_url, 'image_url') }]; })),
-      features: list(v.features, 8, 'features').map((x) => ({ icon: ICONS.includes(x?.icon) ? x.icon : 'shield', title: txt(x?.title, 60), text: txt(x?.text, 200) })),
+      sections: Object.fromEntries(SECTION_KEYS.map((k) => { const x = v.sections?.[k] || {}; return [k, { title: txt(x.title, 60), nav: txt(x.nav, 30), desc: txt(x.desc, 200), image_url: httpsUrl(x.image_url, 'image_url'), icon: ICONS.includes(x.icon) ? x.icon : null, anim: ANIMS.includes(x.anim) ? x.anim : 'none' }]; })),
+      features: list(v.features, 8, 'features').map((x) => ({ icon: ICONS.includes(x?.icon) ? x.icon : 'shield', title: txt(x?.title, 60), text: txt(x?.text, 200), image_url: httpsUrl(x?.image_url, 'image_url'), anim: ANIMS.includes(x?.anim) ? x.anim : 'none' })),
       banners: list(v.banners, 6, 'banners').map((x) => ({ image_url: httpsUrl(x?.image_url, 'image_url'), title: txt(x?.title, 120), text: txt(x?.text, 300), button: txt(x?.button, 40), link: link(x?.link) })),
       show: Object.fromEntries(['banners', 'sections', 'latest', 'top', 'features', 'contact'].map((k) => [k, show[k] !== false])),
       contact: { title: txt(v.contact?.title, 80), text: txt(v.contact?.text, 300) },
@@ -419,20 +421,20 @@ export default function (add) {
   // ---------- الطلبات والمبيعات ----------
   add('GET', '/admin/orders', 'admin', async (c) => {
     const st = ['pending', 'paid', 'test', 'cancelled', 'refunded'].includes(c.url.searchParams.get('status')) ? c.url.searchParams.get('status') : null;
-    return {
-      items: await c.db.all(`select b.id, b.status, b.reference, b.amount, b.currency, b.provider, b.note, b.created_at, b.paid_at,
+    const items = await c.db.all(`select b.id, b.status, b.reference, b.amount, b.currency, b.provider, b.note, b.created_at, b.paid_at,
         p.title, p.slug, pr.email, pr.name from purchases b left join products p on p.id = b.product_id left join profiles pr on pr.id = b.user_id
-        where ($1::text is null or b.status = $1) order by b.created_at desc limit 300`, [st]),
-    };
+        where ($1::text is null or b.status = $1) order by b.created_at desc limit 300`, [st]);
+    for (const o of items) o.note = await c.open(o.note);
+    return { items };
   });
 
   add('POST', '/admin/orders/:id/status', 'admin', async (c) => {
     const id = uid(c.params.id), st = ['paid', 'cancelled', 'refunded'].includes(c.body?.status) ? c.body.status : fail(400, 'invalid_status');
-    const note = c.body?.note ? str(c.body.note, 1000, { name: 'note' }) : null;
+    const note = c.body?.note ? await c.seal(str(c.body.note, 1000, { name: 'note' })) : null;
     const [r] = await c.db.tx([
       [`update purchases set status = $2, paid_at = case when $2 = 'paid' then now() else paid_at end, note = coalesce($3, note)
         where id = $1 returning user_id, reference, (select title from products where id = product_id) as title`, [id, st, note]],
-      audit(c, 'order.' + st, id, { note }),
+      audit(c, 'order.' + st, id, { note: note ? 'encrypted' : null }),
     ]);
     const o = r[0] || fail(404, 'not_found');
     const msg = { paid: ['تم تأكيد طلبك ✅', `تم تأكيد الدفع للطلب ${o.reference} (${o.title || ''}). التحميل متاح الآن من صفحة المنتج.`],
@@ -442,19 +444,21 @@ export default function (add) {
   });
 
   // ---------- الرسائل والإشعارات ----------
-  add('GET', '/admin/messages', 'admin', async (c) => ({
-    items: await c.db.all(`select m.id, m.name, m.email, m.subject, m.body, m.status, m.reply, m.replied_at, m.created_at, pr.email as account_email
-      from messages m left join profiles pr on pr.id = m.user_id order by m.created_at desc limit 300`),
-  }));
+  add('GET', '/admin/messages', 'admin', async (c) => {
+    const items = await c.db.all(`select m.id, m.name, m.email, m.subject, m.body, m.status, m.reply, m.replied_at, m.created_at, pr.email as account_email
+      from messages m left join profiles pr on pr.id = m.user_id order by m.created_at desc limit 300`);
+    for (const m of items) { m.email = await c.open(m.email); m.body = await c.open(m.body); m.reply = await c.open(m.reply); }
+    return { items };
+  });
 
   add('POST', '/admin/messages/:id/reply', 'admin', async (c) => {
     const id = bigId(c.params.id), reply = str(c.body?.reply, 5000, { min: 1, name: 'reply' });
     const [r] = await c.db.tx([
-      [`update messages set reply = $2, status = 'replied', replied_at = now() where id = $1 returning user_id, subject`, [id, reply]],
+      [`update messages set reply = $2, status = 'replied', replied_at = now() where id = $1 returning user_id, subject`, [id, await c.seal(reply)]],
       audit(c, 'message.reply', id),
     ]);
     const m = r[0] || fail(404, 'not_found');
-    if (m.user_id) await c.db.one(`insert into notifications(user_id, kind, title, body, created_by) values ($1, 'message', $2, $3, app_uid())`, [m.user_id, 'رد على: ' + m.subject.slice(0, 150), reply]);
+    if (m.user_id) await c.db.one(`insert into notifications(user_id, kind, title, body, created_by) values ($1, 'message', $2, $3, app_uid())`, [m.user_id, 'رد على: ' + m.subject.slice(0, 150), await c.seal(reply)]);
     return { ok: true, notified: !!m.user_id };
   });
 
@@ -464,10 +468,12 @@ export default function (add) {
     return { ok: true };
   });
 
-  add('GET', '/admin/notifications', 'admin', async (c) => ({
-    items: await c.db.all(`select n.id, n.kind, n.title, n.body, n.for_admins, n.created_at, pr.email from notifications n
-      left join profiles pr on pr.id = n.user_id order by n.created_at desc limit 150`),
-  }));
+  add('GET', '/admin/notifications', 'admin', async (c) => {
+    const items = await c.db.all(`select n.id, n.kind, n.title, n.body, n.for_admins, n.created_at, pr.email from notifications n
+      left join profiles pr on pr.id = n.user_id order by n.created_at desc limit 150`);
+    for (const n of items) n.body = await c.open(n.body);
+    return { items };
+  });
 
   add('POST', '/admin/notifications', 'admin', async (c) => {
     const title = str(c.body?.title, 200, { min: 2, name: 'title' }), body = str(c.body?.body ?? '', 4000, { name: 'body' });
@@ -495,7 +501,7 @@ export default function (add) {
       ['insert into settings(key, value, updated_at) values ($1, $2, now()) on conflict (key) do update set value = excluded.value, updated_at = now()', [key, JSON.stringify(v)]],
       audit(c, 'settings.update', key),
     ]);
-    c.settingsCache.delete(key);
+    c.settingsCache.delete(key); c.settingsCache.delete('__public');
     return { ok: true, value: v };
   });
 

@@ -1,5 +1,6 @@
 // نقطة دخول الواجهة الخلفية (Neon Function): توجيه + حماية + مصادقة + أخطاء موحّدة
 import { createSql } from './sql.js';
+import { seal, open } from './crypto.js';
 import { HttpError, verifyJWT, inspect, isProbe, isAttackTool, BOT_UA, rate, strike, clearStrikes, once, sha, decodeSafe } from './lib.js';
 import userRoutes from './routes.js';
 import adminRoutes from './admin.js';
@@ -10,7 +11,23 @@ const DB_URL = E.STORE_DB_URL || E.DATABASE_URL;
 const sql = DB_URL ? createSql(DB_URL) : null;
 const PRE = E.STORE_DB_URL ? [] : [['set local role store_api']];
 const sys = async (t, p) => { const r = await sql.batch([...PRE, [t, p]]); return r[r.length - 1]; };
+// استعلامات بصلاحية المالك لجداول ops فقط (مفتاح التشفير وسجل أجهزة المدير) — store_api لا يصل إليها أبداً
+const ownerQ = async (t, p) => (await sql.batch([[t, p]]))[0];
 const SALT = E.VISITOR_SALT || sha(`${DB_URL}:visitor`);
+// تنبيه المالك عند دخول لوحة التحكم من جهاز/متصفح جديد (حماية من سرقة الجلسة)
+const seenDev = new Set();
+async function adminDevice(c) {
+  try {
+    const ua = String(c.ua || '').replace(/[\d._]+/g, '').slice(0, 300);
+    const h = sha(`${ua}|${SALT}`).slice(0, 32), k = `${c.uid}:${h}`;
+    if (seenDev.has(k)) return;
+    seenDev.add(k);
+    const r = await ownerQ(`insert into ops.admin_devices(uid, ua_hash, ua) values ($1, $2, $3)
+      on conflict (uid, ua_hash) do update set last_seen = now()
+      returning (xmax = 0) as fresh, (select count(*)::int from ops.admin_devices where uid = $1) as before`, [c.uid, h, ua.slice(0, 200)]);
+    if (r[0]?.fresh && r[0].before > 0) await c.secLog('admin_new_device', 'high', { ua: ua.slice(0, 160) });
+  } catch { /* لا نعطّل اللوحة إن فشل التسجيل */ }
+}
 const ORIGINS = new Set((E.ALLOWED_ORIGINS || 'https://majhool-store.netlify.app').split(',').map((s) => s.trim()).filter(Boolean));
 const SEC = {
   'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY',
@@ -76,7 +93,7 @@ async function handle(req) {
     req, url, method: req.method, path: url.pathname.replace(/\/+$/, '') || '/',
     ip: (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || '0.0.0.0', // المنصة تستبدل هذا الرأس بعنوان العميل الحقيقي
     ua: (req.headers.get('user-agent') || '').slice(0, 300), uid: null, profile: null, cache: null,
-    blocked, getSetting, settingsCache,
+    blocked, getSetting, settingsCache, seal: (t) => seal(ownerQ, t), open: (t) => open(ownerQ, t),
   };
   const out = (status, data, headers = {}) => new Response(data == null ? null : JSON.stringify(data), {
     status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...SEC, ...cors, ...headers },
@@ -166,7 +183,7 @@ async function handle(req) {
   if (['user', 'admin', 'owner'].includes(route.auth) && !c.uid) return out(401, { error: 'auth_required' });
   c.db = dbFor(c.uid);
   if (c.uid) {
-    try { c.profile = await c.db.one('select * from ensure_profile()'); } catch (e) {
+    try { c.profile = await c.db.one('select * from ensure_profile()'); if (['admin', 'owner'].includes(c.profile?.role)) await adminDevice(c); } catch (e) {
       if (route.auth === 'optional' && /registration_closed/.test(e.message)) { c.uid = null; c.db = dbFor(null); }
       else if (/registration_closed/.test(e.message)) return out(403, { error: 'registration_closed' });
       else throw e;
