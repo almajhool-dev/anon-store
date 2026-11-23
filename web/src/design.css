@@ -246,3 +246,33 @@ body[data-hs="shadow3d"] :is(h1, h2) { text-shadow: 1px 1px 0 color-mix(in srgb,
 .pbar { height: 8px; border-radius: 4px; background: var(--grad); min-width: 2px; width: var(--w, 0%); }
 .good-t { color: #22c55e; } .mid-t { color: #f59e0b; } .bad-t { color: #ef4444; }
 .ds-bundle { font-weight: 800; letter-spacing: .04em; }
+
+/* ---------- 💧 حركات الأزرار والقوائم (مثل Glassy Sidebar): حبة تنزلق وتتمطّط وتلتحم بحافة القائمة ---------- */
+.lq { position: relative; isolation: isolate; --lq-bg: #fff; --lq-fg: #0b1020; }
+body[data-mode="light"] .lq:not(.adm-side):not(.drawer nav) { --lq-bg: #0f172a; --lq-fg: #fff; }
+.lq > .lq-pill { position: absolute; z-index: 0; border-radius: 12px; background: var(--lq-bg); box-shadow: 0 10px 24px rgba(0, 0, 0, .28), inset 0 -1px 0 rgba(0, 0, 0, .06); pointer-events: none; }
+.tabs.lq > .lq-pill { border-radius: var(--r-btn, 12px); } .nav.lq > .lq-pill { border-radius: 10px; }
+.lq > :is(a, button) { position: relative; z-index: 1; transition: color .3s ease .1s, background-color .2s, transform .15s; }
+.lq > :is(.active, .primary, [aria-current="page"], [aria-selected="true"]) { color: var(--lq-fg) !important; background: transparent !important; box-shadow: none !important; border-color: transparent !important; text-shadow: none !important; }
+.lq > :is(a, button):active { transform: scale(.97); }
+/* الالتحام: شريط أبيض على حافة قائمة المدير، والحبة النشطة تتصل به بزوايا مقعّرة */
+.lq-join::after { content: ''; position: absolute; z-index: 0; left: 0; top: 10px; bottom: 10px; width: 12px; border-radius: 0 12px 12px 0; background: var(--lq-bg); pointer-events: none; }
+.lq-join > .lq-pill { border-radius: 0 12px 12px 0; box-shadow: none; }
+.lq-join > .lq-pill::before, .lq-join > .lq-pill::after { content: ''; position: absolute; left: 12px; width: 14px; height: 14px; pointer-events: none; }
+.lq-join > .lq-pill::before { bottom: 100%; background: radial-gradient(circle at 100% 0, transparent 13.5px, var(--lq-bg) 14px); }
+.lq-join > .lq-pill::after { top: 100%; background: radial-gradient(circle at 100% 100%, transparent 13.5px, var(--lq-bg) 14px); }
+/* قوائم زجاجية (لوحة المدير وقائمة الهاتف) */
+body[data-lqglass="1"] :is(.adm-side, .drawer nav) { background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 34%, rgba(14, 22, 48, .94)), rgba(8, 12, 28, .95) 72%); border: 1px solid rgba(255, 255, 255, .12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 24px 60px rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); }
+body[data-lqglass="1"] :is(.adm-side, .drawer nav) > a { color: #dbe4ff; background: linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02)); border: 1px solid rgba(255, 255, 255, .08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); margin-bottom: 6px; }
+body[data-lqglass="1"] :is(.adm-side, .drawer nav) > a:hover { background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .05)); color: #fff; }
+/* طي وفتح قائمة لوحة التحكم (أيقونات فقط ↔ كاملة) */
+.lq-rail-btn { display: none; }
+.adm-side .lbl { display: inline-block; max-width: 190px; overflow: hidden; white-space: nowrap; vertical-align: middle; transition: max-width .45s cubic-bezier(.65, 0, .35, 1), opacity .3s ease .15s, filter .35s ease .12s; }
+@media (min-width: 961px) {
+  body[data-lqrail="1"] .adm { transition: grid-template-columns .45s cubic-bezier(.65, 0, .35, 1); }
+  body[data-lqrail="1"] .adm.rail { grid-template-columns: 74px minmax(0, 1fr); }
+  body[data-lqrail="1"] .adm.rail .adm-side .lbl { max-width: 0; opacity: 0; filter: blur(6px); transition-delay: 0s; }
+  body[data-lqrail="1"] .adm.rail .adm-side > a { justify-content: center; gap: 0; }
+  body[data-lqrail="1"] .lq-rail-btn { display: grid; place-items: center; width: 30px; height: 30px; margin: 0 0 8px auto; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .08); color: inherit; cursor: pointer; transition: transform .45s cubic-bezier(.65, 0, .35, 1); }
+  body[data-lqrail="1"] .adm.rail .lq-rail-btn { margin: 0 auto 8px; transform: scaleX(-1); }
+}

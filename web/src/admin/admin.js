@@ -1,4 +1,5 @@
 // لوحة المدير: الهيكل + نظرة عامة، الطلبات، المستخدمون، الرسائل، الإشعارات، التخزين، الأمان، السجل
+import { railOn } from '../lib/liquid.js';
 import { html, mount, actions, toast, confirmBox, promptBox, busy, $ } from '../lib/dom.js';
 import { api, fmtNum, fmtBytes, fmtDate, fmtDateTime, fmtPrice, ago } from '../lib/core.js';
 import { icon } from '../lib/art.js';
@@ -167,7 +168,7 @@ export default async function (view, m, ctx) {
     return;
   }
   const tab = TABS.some(([t]) => t === m[1]) ? m[1] : 'overview';
-  mount(view, html`<div class="container adm"><nav class="card adm-side" aria-label="أقسام لوحة المدير">${TABS.map(([t, l, i]) => html`<a href="/admin/${t}" class="${t === tab ? 'active' : ''}">${icon(i)} ${l}</a>`)}</nav><section id="adm-main">${loader()}</section></div>`);
+  mount(view, html`<div class="container adm ${railOn() ? 'rail' : ''}"><nav class="card adm-side" aria-label="أقسام لوحة المدير"><button type="button" class="lq-rail-btn" data-rail aria-label="طي أو فتح القائمة">${icon('back')}</button>${TABS.map(([t, l, i]) => html`<a href="/admin/${t}" class="${t === tab ? 'active' : ''}" title="${l}">${icon(i)}<span class="lbl">${l}</span></a>`)}</nav><section id="adm-main">${loader()}</section></div>`);
   const main = $('#adm-main', view);
   actions(main, { reload: () => ctx.go(location.pathname + location.search, true) });
   try {

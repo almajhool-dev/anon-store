@@ -14,6 +14,7 @@ import { auto3d } from './lib/spin3d.js';
 import { play } from './lib/transitions.js';
 import { startDesign, initQuality, applyDesign, currentDesign, lite } from './lib/design.js';
 import { startVitals } from './lib/vitals.js';
+import { startLiquid, refreshLiquid } from './lib/liquid.js';
 const DSP = window.parent !== window && new URLSearchParams(location.search).has('dsp'); // داخل معاينة استوديو التصميم
 
 export const state = { settings: null, me: null, unread: 0 };
@@ -57,6 +58,11 @@ export function applyTheme(site) {
   if (c.panel && c.panel !== '#0e1222') { s.setProperty('--panel', `color-mix(in srgb, ${c.panel} 80%, transparent)`); s.setProperty('--panel-2', `color-mix(in srgb, ${c.panel} 92%, transparent)`); } else { s.removeProperty('--panel'); s.removeProperty('--panel-2'); }
   document.body.dataset.pt = site.anim?.page || 'fade';
   document.body.dataset.reveal = site.anim?.reveal || 'up';
+  // حركات الأزرار والقوائم (تُطفأ من لوحة التحكم)
+  document.body.dataset.lq = site.anim?.liquid === false ? '0' : '1';
+  document.body.dataset.lqglass = site.anim?.glassnav === false ? '0' : '1';
+  document.body.dataset.lqrail = site.anim?.rail === false ? '0' : '1';
+  refreshLiquid(false);
   document.body.dataset.font = site.font || 'Cairo';
   document.body.dataset.bg = site.background || 'network';
   if (site.background === 'image' && site.background_url) s.setProperty('--bg-image', `url("${safeUrl(site.background_url)}")`);
@@ -162,7 +168,7 @@ export async function go(path, replace = false) {
   history[replace ? 'replaceState' : 'pushState'](null, '', path);
   await render(true);
 }
-let firstPaint = true;
+let firstPaint = true, lastPath = '';
 async function render(scroll) {
   const id = ++navId, view = $('#view'), path = location.pathname;
   $('#drawer')?.classList.remove('open');
@@ -179,8 +185,10 @@ async function render(scroll) {
       view.innerHTML = '';
       if (scroll) scrollTo({ top: 0 });
       cleanup = await mod.default(view, m, { state, go, refreshMe, setTitle, isAdmin, applyTheme, renderHeader });
-      if (!firstPaint) play(view, state.settings.site.anim?.page || 'fade'); // حركة الانتقال بين الصفحات (ليس عند أول ظهور: المحتوى فوراً)
-      firstPaint = false;
+      // حركة الانتقال بين الصفحات: ليس عند أول ظهور، ولا بين تبويبات لوحة المدير (القائمة ثابتة وتتحرك حبتها فقط)
+      const inAdmin = lastPath.startsWith('/admin') && location.pathname.startsWith('/admin');
+      if (!firstPaint && !inAdmin) play(view, state.settings.site.anim?.page || 'fade');
+      firstPaint = false; lastPath = location.pathname;
     } catch (e) {
       console.error(e);
       if (id === navId) mount(view, html`<div class="container page"><div class="empty card">${icon('shield')}<p>${e.message || 'تعذر تحميل الصفحة'}</p><a class="btn ghost sm" href="/">الرئيسية</a></div></div>`);
@@ -258,6 +266,7 @@ function useSettings(s) {
   document.body.dataset.covers = getContent(state).covers_anim;
   auto3d();
   renderLayout();
+  startLiquid();
   if (hinted) await refreshMe();
   if (!settings) toast('تعذر الاتصال بالخادم حالياً — بعض الميزات قد لا تعمل', 'warn', 6000);
   render(false);

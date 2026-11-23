@@ -340,6 +340,14 @@ ok('audit log records admin actions', (await api('/admin/audit', { token: admin.
   const pr = (await api('/settings')).data;
   ok('one-tap undo: restore brings back the previous design AND colors', pr.design?.sections?.hero === 'hero-center-glass' && pr.site.colors.primary === '#ff2d55' && pr.site.background === 'matrix', JSON.stringify([pr.design?.sections?.hero, pr.site.colors?.primary]));
   await api('/admin/settings/site', { method: 'PUT', token: admin.token, body: { value: { ...pr.site, colors: sBefore.colors, background: sBefore.background } } });
+  // 💧 مفاتيح حركات الأزرار تُحفظ وتُطفأ من لوحة التحكم (افتراضياً مفعّلة، والشكل الأصلي بدونها)
+  ok('original look has the button transitions off', pz.site.anim?.liquid === false && pz.site.anim?.glassnav === false && pz.site.anim?.rail === false, JSON.stringify(pz.site.anim));
+  const s1 = (await api('/settings')).data.site;
+  await api('/admin/settings/site', { method: 'PUT', token: admin.token, body: { value: { ...s1, anim: { ...s1.anim, liquid: false, glassnav: true, rail: false } } } });
+  const s2 = (await api('/settings')).data.site;
+  await api('/admin/settings/site', { method: 'PUT', token: admin.token, body: { value: { ...s1, anim: { page: s1.anim?.page || 'fade', reveal: s1.anim?.reveal || 'up', auth: s1.anim?.auth || 'morph' } } } });
+  const s3 = (await api('/settings')).data.site;
+  ok('button transition toggles saved from the control panel (and default ON)', s2.anim.liquid === false && s2.anim.glassnav === true && s2.anim.rail === false && s3.anim.liquid === true && s3.anim.rail === true, JSON.stringify([s2.anim, s3.anim]));
   ok('design: private draft/history never in public settings', !/design_draft|design_history/.test(JSON.stringify((await api('/settings')).data)));
   if (LOCAL) {
     // --- 🕸️ الفخاخ (3000 مؤشر) ---

@@ -22,12 +22,12 @@ const FA = ['cairo', 'tajawal', 'kufi', 'plex', 'readex', 'almarai', 'messiri', 
 const FE = ['same', 'inter', 'montserrat', 'grotesk', 'exo', 'raleway', 'playfair', 'system', 'mono', 'serif'];
 const FH = ['same', 'lalezar', 'ruqaa', 'reem', 'messiri', 'amiri', 'changa', 'kufi', 'readex', 'orbitron', 'monoton', 'playfair', 'exo', 'grotesk', 'montserrat', 'raleway', 'inter'];
 // الشكل الأصلي للموقع (الألوان والخلفية وحركات الانتقال كما كانت عند الإطلاق)
-const LOOK0 = { colors: { primary: '#18b4ff', accent: '#8b5cf6', bg: '#05060b', text: '#e8ebf7', panel: '#0e1222' }, background: 'network', anim: { page: 'fade', reveal: 'up', auth: 'morph' } };
+const LOOK0 = { colors: { primary: '#18b4ff', accent: '#8b5cf6', bg: '#05060b', text: '#e8ebf7', panel: '#0e1222' }, background: 'network', anim: { page: 'fade', reveal: 'up', auth: 'morph', liquid: false, glassnav: false, rail: false } };
 const lookOf = (s) => ({ colors: s?.colors || null, background: s?.background || null, anim: s?.anim || null });
 const cleanLook = (l) => ({
   ...(l?.colors && Object.values(l.colors).every((x) => /^#[0-9a-f]{6}$/i.test(x)) ? { colors: l.colors } : {}),
   ...(['network', 'matrix', 'grid', 'image', 'video', 'plain'].includes(l?.background) ? { background: l.background } : {}),
-  ...(l?.anim && Object.values(l.anim).every((x) => /^[a-z0-9-]{2,32}$/.test(x)) ? { anim: l.anim } : {}),
+  ...(l?.anim && Object.values(l.anim).every((x) => typeof x === 'boolean' || /^[a-z0-9-]{2,32}$/.test(x)) ? { anim: l.anim } : {}),
 });
 const DS_SEC = ['header', 'hero', 'cats', 'cards', 'product', 'learn', 'account', 'auth', 'footer', 'buttons'];
 const dsId = (v) => (typeof v === 'string' && v.length <= 40 && /^[a-z]+-[a-z]+-[a-z]+$/.test(v) ? v : null);
@@ -99,7 +99,7 @@ function settingInput(key, v) {
       tagline: str(v.tagline ?? '', 220, { name: 'tagline' }),
       colors: { primary: hex(v.colors?.primary), accent: hex(v.colors?.accent), bg: hex(v.colors?.bg), text: v.colors?.text ? hex(v.colors.text) : '#e8ebf7', panel: v.colors?.panel ? hex(v.colors.panel) : '#0e1222' },
       font: ['Cairo', 'Tajawal', 'system'].includes(v.font) ? v.font : 'Cairo',
-      anim: { page: akey(v.anim?.page, 'fade'), reveal: akey(v.anim?.reveal, 'up'), auth: akey(v.anim?.auth, 'morph') },
+      anim: { page: akey(v.anim?.page, 'fade'), reveal: akey(v.anim?.reveal, 'up'), auth: akey(v.anim?.auth, 'morph'), liquid: v.anim?.liquid !== false, glassnav: v.anim?.glassnav !== false, rail: v.anim?.rail !== false },
       background: ['network', 'matrix', 'grid', 'image', 'video', 'plain'].includes(v.background) ? v.background : 'network',
       background_url: httpsUrl(v.background_url, 'background_url'), background_video_url: ownMedia(v.background_video_url, 'background_video_url'), logo_url: httpsUrl(v.logo_url, 'logo_url'),
       favicon_url: httpsUrl(v.favicon_url, 'favicon_url'), announcement: str(v.announcement ?? '', 300, { name: 'announcement' }),

@@ -34,6 +34,10 @@ export default async function (main, ctx) {
         <label class="field"><span>حركة الانتقال بين الصفحات (${TRANSITIONS.length} حركة)</span><select class="select" name="anim_page">${trOpts(site.anim?.page || 'fade', [['none', 'بدون حركة']])}</select></label>
         <label class="field"><span>حركة ظهور المحتوى</span><select class="select" name="anim_reveal">${trOpts(site.anim?.reveal || 'up', [['none', 'بدون حركة']])}</select></label>
         <label class="field"><span>حركة صفحة الدخول</span><select class="select" name="anim_auth">${trOpts(site.anim?.auth || 'morph', [['morph', '✨ تحوّل البطاقة مع نقطة ضوء']])}</select></label>
+        <div class="field"><span>حركات الأزرار والقوائم (مثل Glassy Sidebar)</span><div class="row wrap gap">
+          <label class="switch"><input type="checkbox" name="anim_liquid" ${site.anim?.liquid !== false ? 'checked' : ''}> المؤشر السائل للأزرار والقوائم</label>
+          <label class="switch"><input type="checkbox" name="anim_glassnav" ${site.anim?.glassnav !== false ? 'checked' : ''}> قوائم زجاجية</label>
+          <label class="switch"><input type="checkbox" name="anim_rail" ${site.anim?.rail !== false ? 'checked' : ''}> طي وفتح قائمة لوحة التحكم</label></div></div>
         <div class="field"><span>معاينة الحركات</span><div class="row wrap gap"><div class="card pad tr-box" id="trp">${icon('star')} معاينة</div><button type="button" class="btn ghost sm" data-act="trprev" data-sel="anim_page">الصفحات</button><button type="button" class="btn ghost sm" data-act="trprev" data-sel="anim_reveal">المحتوى</button><button type="button" class="btn ghost sm" data-act="trprev" data-sel="anim_auth">الدخول</button></div></div>
         <label class="field"><span>الخلفية</span><select class="select" name="background">${[['network', 'شبكة رقمية متحركة'], ['matrix', 'مطر رقمي متحرك (ماتريكس)'], ['grid', 'شبكة ثابتة'], ['image', 'صورة أو GIF متحرك'], ['video', 'فيديو متحرك (MP4)'], ['plain', 'سادة']].map(([v, t]) => html`<option value="${v}" ${site.background === v ? 'selected' : ''}>${t}</option>`)}</select></label>
         <label class="field"><span>العملة الافتراضية</span><select class="select" name="currency"><option value="USD" ${site.currency === 'USD' ? 'selected' : ''}>USD</option><option value="IQD" ${site.currency === 'IQD' ? 'selected' : ''}>IQD</option></select></label></div>
@@ -70,7 +74,7 @@ export default async function (main, ctx) {
   const readSite = (f) => {
     const d = Object.fromEntries(new FormData(f));
     return { ...site, name: d.name, name_en: d.name_en, tagline: d.tagline, announcement: d.announcement, font: d.font, background: d.background, currency: d.currency,
-      colors: { primary: d.primary, accent: d.accent, bg: d.bg, text: d.text, panel: d.panel }, anim: { page: d.anim_page, reveal: d.anim_reveal, auth: d.anim_auth }, logo_url: d.logo_url || null, favicon_url: d.favicon_url || null, background_url: d.background_url || null, background_video_url: d.background_video_url || null,
+      colors: { primary: d.primary, accent: d.accent, bg: d.bg, text: d.text, panel: d.panel }, anim: { page: d.anim_page, reveal: d.anim_reveal, auth: d.anim_auth, liquid: d.anim_liquid === 'on', glassnav: d.anim_glassnav === 'on', rail: d.anim_rail === 'on' }, logo_url: d.logo_url || null, favicon_url: d.favicon_url || null, background_url: d.background_url || null, background_video_url: d.background_video_url || null,
       sections: Object.fromEntries(Object.keys(KINDS).map((k) => [k, !!d['sec_' + k]])), registration_enabled: !!d.registration_enabled, store_enabled: !!d.store_enabled };
   };
 
