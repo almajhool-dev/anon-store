@@ -6,11 +6,16 @@ const hex = (x) => [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16));
 const ANIM = new Set(['network', 'matrix']);
 const lvl = () => Number(document.body?.dataset.q) || 4, on = () => ANIM.has(mode) && lvl() > 2; // LOW/MEDIUM: بلا خلفية متحركة
 let lastF = 0, args = null;
+// السلاسة: أثناء التمرير تتوقف الخلفية مؤقتاً (لا إعادة رسم تنافس التمرير)، وعلى الأجهزة اللمسية ~30 إطاراً/ث (فرق غير مرئي للنقاط البطيئة)
+const COARSE = matchMedia('(pointer: coarse)').matches;
+let calmAt = 0;
+addEventListener('scroll', () => { calmAt = performance.now() + 160; }, { passive: true });
+const busy = (now) => now < calmAt;
 const CH = 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي0123456789ABCDEF<>/{}$#';
 let drops = [], bgc = [5, 6, 11], last = 0;
 function matrix(t) {
   if (!reduce) raf = requestAnimationFrame(matrix);
-  if (last && t - last < 50) return; // ~20 إطاراً/ث: سلس وموفّر للبطارية
+  if ((last && t - last < 50) || busy(t)) return; // ~20 إطاراً/ث: سلس وموفّر للبطارية
   last = t;
   const fs = w < 700 ? 15 : 17, cols = Math.ceil(w / fs);
   if (drops.length !== cols) drops = Array.from({ length: cols }, () => Math.random() * -40);
@@ -37,7 +42,7 @@ function resize() {
 
 function frame() {
   const now = performance.now();
-  if (lvl() === 3 && now - lastF < 33) { if (!reduce) raf = requestAnimationFrame(frame); return; } // HIGH: ~30 إطاراً/ث
+  if (((lvl() === 3 || COARSE) && now - lastF < 30) || busy(now)) { if (!reduce) raf = requestAnimationFrame(frame); return; } // HIGH واللمسي: ~30 إطاراً/ث
   lastF = now;
   ctx.clearRect(0, 0, w, h);
   const max = w < 700 ? 110 : 140;

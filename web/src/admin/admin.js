@@ -168,15 +168,43 @@ export default async function (view, m, ctx) {
     return;
   }
   const tab = TABS.some(([t]) => t === m[1]) ? m[1] : 'overview';
-  mount(view, html`<div class="container adm ${railOn() ? 'rail' : ''}"><nav class="card adm-side" aria-label="أقسام لوحة المدير"><button type="button" class="lq-rail-btn" data-rail aria-label="طي أو فتح القائمة">${icon('back')}</button>${TABS.map(([t, l, i]) => html`<a href="/admin/${t}" class="${t === tab ? 'active' : ''}" title="${l}">${icon(i)}<span class="lbl">${l}</span></a>`)}</nav><section id="adm-main">${loader()}</section></div>`);
-  const main = $('#adm-main', view);
+  const wrap = view.querySelector(':scope > .adm');
+  let main;
+  if (wrap) {
+    // تبديل التبويب: القائمة تبقى في مكانها وتنزلق حبتها فوراً، والمحتوى وحده يتغير (بلا إعادة رسم كاملة ولا قفز للصفحة)
+    for (const a of wrap.querySelectorAll(':scope > .adm-side > a')) {
+      const on = a.getAttribute('href') === `/admin/${tab}`;
+      a.classList.toggle('active', on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    }
+    const old = $('#adm-main', wrap);
+    main = document.createElement('section');
+    main.id = 'adm-main';
+    main.style.minHeight = `${old.offsetHeight}px`; // يمنع انكماش الصفحة أثناء التحميل
+    old.replaceWith(main);
+    mount(main, loader());
+    if (main.getBoundingClientRect().top < ($('#hdr')?.offsetHeight || 0)) scrollTo({ top: 0 });
+  } else {
+    mount(view, html`<div class="container adm ${railOn() ? 'rail' : ''}"><nav class="card adm-side" aria-label="أقسام لوحة المدير"><button type="button" class="lq-rail-btn" data-rail aria-label="طي أو فتح القائمة">${icon('back')}</button>${TABS.map(([t, l, i]) => html`<a href="/admin/${t}" class="${t === tab ? 'active' : ''}" aria-current="${t === tab ? 'page' : 'false'}" title="${l}">${icon(i)}<span class="lbl">${l}</span></a>`)}</nav><section id="adm-main">${loader()}</section></div>`);
+    main = $('#adm-main', view);
+    warmTabs();
+  }
   actions(main, { reload: () => ctx.go(location.pathname + location.search, true) });
   try {
     if (tab === 'products') return await (await import('./products.js')).default(main, ctx);
     if (tab === 'settings') return await (await import('./settings.js')).default(main, ctx);
     if (tab === 'studio') return await (await import('./studio.js')).default(main, ctx);
     if (tab === 'perf') return await (await import('./perf.js')).default(main, ctx);
-    if (tab === 'content' || tab === 'pages') return (await import('./content.js')).default(main, ctx, tab);
+    if (tab === 'content' || tab === 'pages') return await (await import('./content.js')).default(main, ctx, tab);
     await SIMPLE[tab](main, ctx);
-  } catch (e) { mount(main, errorBox(e)); }
+  } catch (e) { mount(main, errorBox(e)); } finally { main.style.minHeight = ''; }
+}
+
+// تحميل مسبق لتبويبات اللوحة الثقيلة وقت الفراغ (مرة واحدة) فيصبح فتحها لاحقاً فورياً
+let warm = false;
+function warmTabs() {
+  if (warm) return;
+  warm = true;
+  const run = () => Promise.allSettled([import('./products.js'), import('./settings.js'), import('./studio.js'), import('./perf.js'), import('./content.js')]);
+  if ('requestIdleCallback' in window) requestIdleCallback(run, { timeout: 4000 }); else setTimeout(run, 1500);
 }

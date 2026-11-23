@@ -195,8 +195,9 @@ async function render(scroll) {
       if (id !== navId) return;
       if (typeof cleanup === 'function') cleanup();
       cleanup = null;
-      view.innerHTML = '';
-      if (scroll) scrollTo({ top: 0 });
+      // بين تبويبات لوحة المدير تبقى الصفحة وقائمتها كما هي ويُستبدل المحتوى فقط (admin.js)
+      const keep = path.startsWith('/admin') && lastPath.startsWith('/admin') && view.querySelector(':scope > .adm');
+      if (!keep) { view.innerHTML = ''; if (scroll) scrollTo({ top: 0 }); }
       cleanup = await mod.default(view, m, { state, go, refreshMe, setTitle, isAdmin, applyTheme, renderHeader });
       // حركة الانتقال بين الصفحات: ليس عند أول ظهور، ولا بين تبويبات لوحة المدير (القائمة ثابتة وتتحرك حبتها فقط)
       const inAdmin = lastPath.startsWith('/admin') && location.pathname.startsWith('/admin');

@@ -9,6 +9,7 @@ const ro = 'ResizeObserver' in window ? new ResizeObserver(() => refreshLiquid(f
 const seen = new WeakSet();
 const flag = (k) => document.body.dataset[k] === '1';
 const lvl = () => Number(document.body.dataset.q) || 4;
+const anims = (el) => (el.getAnimations ? el.getAnimations() : []); // متصفحات قديمة بلا getAnimations
 const css = (g) => ({ left: `${g.x}px`, top: `${g.y}px`, width: `${g.w}px`, height: `${g.h}px` });
 const keyOf = (box, i) => (box.classList.contains('adm-side') ? 'adm' : box.classList.contains('nav') ? 'nav' : box.closest('.drawer') ? 'drawer' : `tabs:${location.pathname}:${i}`);
 // على الكمبيوتر تلتحم حبة لوحة المدير بالشريط الأبيض على حافة القائمة (كما في الفيديو)، وفي وضع الطي تبقى دائرة حول الأيقونة
@@ -25,17 +26,31 @@ function update(box, i, animate) {
   if (ro) for (const el of [box, ...items]) if (!seen.has(el)) { seen.add(el); ro.observe(el); }
   const fresh = !pill, key = keyOf(box, i);
   if (fresh) { pill = document.createElement('i'); pill.className = 'lq-pill'; pill.setAttribute('aria-hidden', 'true'); box.prepend(pill); }
-  const idx = items.indexOf(act), from = fresh ? mem.get(key) : pill.lqg;
+  const idx = items.indexOf(act);
+  let from = fresh ? mem.get(key) : pill.lqg;
+  // نقرة جديدة أثناء الحركة: تنطلق الحبة من موضعها الظاهر الآن لا من هدفها السابق (بلا قفزة)
+  if (!fresh && from && from.idx !== idx && anims(pill).length) {
+    const r = pill.getBoundingClientRect(), b = box.getBoundingClientRect();
+    from = { x: r.left - b.left - box.clientLeft + box.scrollLeft, y: r.top - b.top - box.clientTop + box.scrollTop, w: r.width, h: r.height, idx: from.idx };
+  }
+  const g0 = pill.lqg, same = g0 && g0.x === to.x && g0.y === to.y && g0.w === to.w && g0.h === to.h;
   mem.set(key, { ...to, idx }); pill.lqg = { ...to, idx };
-  Object.assign(pill.style, css(to));
+  if (!same) Object.assign(pill.style, css(to)); // لا كتابة بلا تغيير (أي تعديل في الصفحة يستدعي التحديث)
   // الحركة فقط عند تغيّر الزر النشط؛ تغيّر التخطيط وحده يضبط الحبة مباشرة
-  if (!animate || !from || from.idx === idx || lvl() <= 1 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  // التمطّط: الحافة الأمامية تصل أولاً فتغطي العنصرين معاً، ثم تلحقها الخلفية
-  const mid = Math.abs(to.y - from.y) >= Math.abs(to.x - from.x)
-    ? { x: to.x, w: to.w, y: Math.min(from.y, to.y), h: Math.abs(to.y - from.y) + (to.y > from.y ? to.h : from.h) }
-    : { y: to.y, h: to.h, x: Math.min(from.x, to.x), w: Math.abs(to.x - from.x) + (to.x > from.x ? to.w : from.w) };
-  pill.getAnimations().forEach((a) => a.cancel());
-  pill.animate([css(from), { ...css(mid), offset: 0.42 }, css(to)], { duration: lvl() === 2 ? 300 : 560, easing: 'cubic-bezier(.65,0,.35,1)' });
+  if (!animate || !from || from.idx === idx || !to.w || !to.h || !pill.animate || lvl() <= 1 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // الحركة بـ transform فقط (على المركِّب لا على المعالج): تبقى سلسة حتى أثناء رسم محتوى الصفحة الجديدة
+  const T = (g) => `translate(${g.x - to.x}px, ${g.y - to.y}px) scale(${g.w / to.w}, ${g.h / to.h})`;
+  const dx = Math.abs(to.x - from.x), dy = Math.abs(to.y - from.y), grid = dx > 4 && dy > 4;
+  const frames = [{ transform: T(from) }];
+  // قائمة أفقية أو عمودية: تمطّط تصل فيه الحافة الأمامية أولاً فتغطي العنصرين ثم تلحقها الخلفية؛ في الشبكات (حركة قطرية) انزلاق مباشر
+  if (!grid) frames.push({ offset: 0.42, transform: T(dy >= dx
+    ? { x: to.x, w: to.w, y: Math.min(from.y, to.y), h: dy + (to.y > from.y ? to.h : from.h) }
+    : { y: to.y, h: to.h, x: Math.min(from.x, to.x), w: dx + (to.x > from.x ? to.w : from.w) }) });
+  frames.push({ transform: 'none' });
+  anims(pill).forEach((a) => a.cancel());
+  pill.classList.add('lq-moving');
+  const an = pill.animate(frames, { duration: lvl() === 2 ? 220 : grid ? 320 : 420, easing: 'cubic-bezier(.65,0,.35,1)' });
+  an.onfinish = () => { if (!anims(pill).length) pill.classList.remove('lq-moving'); };
 }
 
 let raf = 0, wantAnim = false;
