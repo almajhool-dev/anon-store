@@ -1,6 +1,6 @@
 // فحص سريع للنظام المنشور (لا يستخدم اختبارات الحظر حتى لا يُحظر عنوان المختبِر)
 // الاستخدام: API_URL=https://...-api... node scripts/smoke-prod.mjs
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 const API = process.env.API_URL, AUTH = process.env.NEON_AUTH_BASE_URL, O = 'https://majhool-store.netlify.app';
 let pass = 0, failed = 0;
 const ok = (n, c, i = '') => { c ? pass++ : failed++; console.log(`${c ? '✔' : '✘'} ${n}${c ? '' : '  → ' + String(i).slice(0, 200)}`); };
@@ -23,6 +23,13 @@ ok('CORS allows site origin', h.h.get('access-control-allow-origin') === O);
 ok('CORS rejects foreign origin', (await call('/health', { origin: 'https://evil.example' })).s === 403);
 ok('settings', (await call('/settings')).d?.site?.name);
 ok('products list', Array.isArray((await call('/products')).d?.items));
+ok('SQLi blocked', (await call("/products?kind=x' OR '1'='1")).s === 400);
+ok('site trap → synthetic decoy (logged, unsigned = no block)', (await call('/trap/server-status')).s === 200);
+// فحوص الحسابات تتطلب حسابات اختبار (لا ننشئها في الإنتاج): تُتخطّى إن لم تتوفر
+if (!AUTH || !existsSync('/tmp/qa_admin.json') || !existsSync('/tmp/qa_user.json')) {
+  console.log(`ℹ account checks skipped (NEON_AUTH_BASE_URL + /tmp/qa_admin.json + /tmp/qa_user.json needed)\n\n${pass} passed, ${failed} failed`);
+  process.exit(failed ? 1 : 0);
+}
 const A = await token('admin'), U = await token('user');
 ok('admin /me', (await call('/me', { token: A })).d?.profile?.role === 'admin');
 ok('user /me', (await call('/me', { token: U })).s === 200);
@@ -39,8 +46,6 @@ ok('upload via deployed API', done.d?.scan?.status === 'passed', JSON.stringify(
 const dl = await call(`/download/${free.d.id}`, { method: 'POST', body: {} });
 ok('anonymous download signed URL', dl.s === 200 && (await (await fetch(dl.d.url)).text()) === 'hello prod!\n');
 ok('user cannot hit admin', (await call('/admin/stats', { token: U })).s === 403);
-ok('SQLi blocked', (await call("/products?kind=x' OR '1'='1")).s === 400);
-ok('site trap → synthetic decoy (logged, unsigned = no block)', (await call('/trap/server-status')).s === 200);
 const sec = await call('/admin/security', { token: A });
 ok('security events recorded', sec.d?.events?.some((e) => e.kind === 'sqli') && sec.d.events.some((e) => e.kind === 'path_scan_site'));
 ok('cleanup product', (await call(`/admin/products/${free.d.id}`, { method: 'DELETE', token: A })).s === 200);

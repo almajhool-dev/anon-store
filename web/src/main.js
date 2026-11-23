@@ -15,6 +15,8 @@ import { play } from './lib/transitions.js';
 import { startDesign, initQuality, applyDesign, currentDesign, lite } from './lib/design.js';
 import { startVitals } from './lib/vitals.js';
 import { startLiquid, refreshLiquid } from './lib/liquid.js';
+import { startUpdates, isStale } from './lib/update.js';
+window.__boot = 1; // يقرؤه public/boot.js: الحزمة الأساسية حُمّلت
 const DSP = window.parent !== window && new URLSearchParams(location.search).has('dsp'); // داخل معاينة استوديو التصميم
 
 export const state = { settings: null, me: null, unread: 0 };
@@ -164,7 +166,18 @@ function highlight() {
 }
 
 let navId = 0, cleanup = null, trackT;
+// بعد كل نشر تُحذف ملفات النسخة السابقة: التبويب المفتوح من قبل يفشل في تحميل صفحة ⇒ نعيد التحميل مرة واحدة فتصل النسخة الجديدة
+const CHUNK_ERR = /dynamically imported module|Importing a module script failed|error loading dynamically imported module|Unable to preload CSS/i;
+function reloadForUpdate() {
+  // بلا تخزين جلسة لا نعيد التحميل تلقائياً (منعاً لحلقة إعادة تحميل لا تنتهي)
+  try { if (Date.now() - Number(sessionStorage.getItem('chunk_reload') || 0) < 20000) return false; sessionStorage.setItem('chunk_reload', String(Date.now())); } catch { return false; }
+  location.reload();
+  return true;
+}
+addEventListener('vite:preloadError', (e) => { if (reloadForUpdate()) e.preventDefault(); });
+
 export async function go(path, replace = false) {
+  if (isStale()) { location[replace ? 'replace' : 'assign'](path); return; } // نُشرت نسخة جديدة: انتقال كامل يحمّلها
   history[replace ? 'replaceState' : 'pushState'](null, '', path);
   await render(true);
 }
@@ -190,6 +203,7 @@ async function render(scroll) {
       if (!firstPaint && !inAdmin) play(view, state.settings.site.anim?.page || 'fade');
       firstPaint = false; lastPath = location.pathname;
     } catch (e) {
+      if (CHUNK_ERR.test(e?.message || '') && reloadForUpdate()) return;
       console.error(e);
       if (id === navId) mount(view, html`<div class="container page"><div class="empty card">${icon('shield')}<p>${e.message || 'تعذر تحميل الصفحة'}</p><a class="btn ghost sm" href="/">الرئيسية</a></div></div>`);
     }
@@ -250,6 +264,7 @@ function useSettings(s) {
 (async function boot() {
   initQuality();
   startVitals();
+  startUpdates();
   startFx();
   const cached = DSP ? null : readCache();
   // الزائر غير المسجّل (الأغلبية) لا ينتظر فحص الجلسة: نعرض فوراً، ونحدّث الرأس إن تبيّن أنه مسجّل
