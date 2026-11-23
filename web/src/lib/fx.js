@@ -1,3 +1,4 @@
+import { play } from './transitions.js';
 // خلفية الشبكة الرقمية المتحركة (Canvas خفيف) + ظهور العناصر عند التمرير
 let ctx, cv, w, h, pts = [], raf = 0, dpr = 1, color = [24, 180, 255], color2 = [139, 92, 246], mode = 'network';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -84,7 +85,11 @@ export function setFxTheme(primary, accent, bgMode, bg) {
 }
 
 const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => {
-  for (const e of es) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  for (const e of es) if (e.isIntersecting) {
+    e.target.classList.add('in'); io.unobserve(e.target);
+    const k = document.body.dataset.reveal;
+    if (k && k !== 'none') play(e.target, k);
+  }
 }, { rootMargin: '0px 0px -40px 0px' }) : null;
 export function reveal(root = document) {
   for (const el of root.querySelectorAll('.reveal:not(.in)')) io ? io.observe(el) : el.classList.add('in');

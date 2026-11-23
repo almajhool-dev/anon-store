@@ -37,21 +37,6 @@ function faq(view, { state, setTitle }) {
     <div class="card pad mt2 center"><p>لم تجد إجابتك؟</p><a class="btn primary" href="/contact">${icon('chat')} تواصل معنا</a></div></div>`);
 }
 
-function login(view, { state, go, setTitle }) {
-  setTitle('تسجيل الدخول');
-  if (auth.signedIn && state.me) { go(nextPath(), true); return; }
-  const closed = state.settings.site.registration_enabled === false;
-  mount(view, html`<div class="container page"><div class="card pad glow center">
-    <div class="hero-logo">${raw(LOGO)}</div><h1>تسجيل الدخول</h1><p class="muted">ادخل بحساب Google بأمان — يُنشأ حسابك تلقائياً عند أول دخول.</p>
-    ${closed ? html`<p class="badge warn">التسجيل الجديد مغلق حالياً — الحسابات الحالية فقط</p>` : ''}
-    <button class="btn primary lg mt" id="g">${icon('key')} المتابعة باستخدام Google</button>
-    <p class="muted small mt">${icon('shield')} لا نخزّن كلمات مرور. الجلسات قصيرة العمر وموقّعة.</p></div></div>`);
-  $('#g', view).onclick = async (e) => {
-    busy(e.currentTarget, true);
-    try { await auth.google(nextPath()); } catch (er) { toast(er.message || 'تعذر بدء تسجيل الدخول', 'error'); busy(e.currentTarget, false); }
-  };
-}
-
 function claim(view, { state, go, refreshMe, setTitle }) {
   setTitle('تفعيل حساب المالك');
   const fromHash = location.hash.slice(1);
@@ -60,7 +45,7 @@ function claim(view, { state, go, refreshMe, setTitle }) {
   mount(view, html`<div class="container page"><div class="card pad glow center">${icon('shield')}<h1>تفعيل حساب المالك</h1>
     ${!token ? html`<p class="muted">رابط التفعيل غير مكتمل.</p>` : !auth.signedIn ? html`<p class="muted">سجّل الدخول بحساب Google الذي تريده مالكاً للمتجر، ثم ستعود لهذه الصفحة.</p><button class="btn primary" id="in">${icon('key')} الدخول بـ Google</button>`
     : html`<p class="muted">سيصبح الحساب <b class="ltr">${state.me?.email}</b> مالك المتجر بصلاحيات كاملة. هذا الرابط يُستخدم مرة واحدة فقط.</p><button class="btn primary lg" id="go">${icon('check')} تفعيل الآن</button>`}</div></div>`);
-  $('#in', view)?.addEventListener('click', () => auth.google('/claim'));
+  $('#in', view)?.addEventListener('click', () => go('/login?next=/claim'));
   $('#go', view)?.addEventListener('click', async (e) => {
     busy(e.currentTarget, true);
     try { await api.post('/admin/claim', { token }); sessionStorage.removeItem('owner-claim'); toast('تم تفعيل حساب المالك ✅', 'ok'); await refreshMe(); go('/admin'); }
@@ -69,5 +54,5 @@ function claim(view, { state, go, refreshMe, setTitle }) {
 }
 
 export default function (view, m, ctx) {
-  return { contact, faq, login, claim }[m[1]](view, ctx);
+  return { contact, faq, claim }[m[1]](view, ctx);
 }

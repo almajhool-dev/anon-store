@@ -10,6 +10,7 @@ import { startFx, setFxTheme, reveal, autoReveal } from './lib/fx.js';
 import { getContent, SECTIONS } from './lib/content.js';
 import { showIntro } from './lib/intro.js';
 import { auto3d } from './lib/spin3d.js';
+import { play } from './lib/transitions.js';
 
 export const state = { settings: null, me: null, unread: 0 };
 const DEFAULT_SITE = { name: 'متجر المبرمج المجهول', name_en: 'Anonymous Programmer Store', tagline: '', colors: { primary: '#18b4ff', accent: '#8b5cf6', bg: '#05060b' }, sections: {}, registration_enabled: true, store_enabled: true, currency: 'USD' };
@@ -20,7 +21,8 @@ const ROUTES = [
   [/^\/p\/([a-z0-9-]+)$/, () => import('./pages/product.js')],
   [/^\/learn\/([a-z0-9-]+)$/, () => import('./pages/learn.js')],
   [/^\/account$/, () => import('./pages/account.js')],
-  [/^\/(contact|faq|login|claim)$/, () => import('./pages/info.js')],
+  [/^\/(login|signup|forgot)$/, () => import('./pages/auth.js')],
+  [/^\/(contact|faq|claim)$/, () => import('./pages/info.js')],
   [/^\/page\/([a-z0-9-]+)$/, () => import('./pages/page.js')],
   [/^\/admin(?:\/([a-z]+))?$/, () => import('./admin/admin.js')],
 ];
@@ -169,7 +171,7 @@ async function render(scroll) {
       view.innerHTML = '';
       if (scroll) scrollTo({ top: 0 });
       cleanup = await mod.default(view, m, { state, go, refreshMe, setTitle, isAdmin, applyTheme, renderHeader });
-      view.classList.remove('pt'); void view.offsetWidth; view.classList.add('pt'); // حركة الانتقال بين الصفحات
+      play(view, state.settings.site.anim?.page || 'fade'); // حركة الانتقال بين الصفحات (مكتبة 100 حركة)
     } catch (e) {
       console.error(e);
       if (id === navId) mount(view, html`<div class="container page"><div class="empty card">${icon('shield')}<p>${e.message || 'تعذر تحميل الصفحة'}</p><a class="btn ghost sm" href="/">الرئيسية</a></div></div>`);

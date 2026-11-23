@@ -2,7 +2,8 @@
 import { createAuthClient } from '@neon/neon-js/auth';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech';
-export const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'https://ep-square-breeze-bawdktqt.neonauth.c-8.eu-central-1.aws.neon.tech/neondb/auth';
+// المصادقة عبر نفس نطاق الموقع (وكيل Netlify) حتى تُحفظ الجلسة على آيفون/سفاري الذي يحظر كوكيز الطرف الثالث
+export const AUTH_URL = import.meta.env.VITE_AUTH_URL || `${location.origin}/api/auth`;
 
 // ---------- المصادقة ----------
 const client = createAuthClient(AUTH_URL);
@@ -16,6 +17,11 @@ async function refresh() {
     if (user) take(data.session?.token); else { jwt = null; exp = 0; }
   } catch { /* شبكة */ }
 }
+async function call(p) {
+  const r = await p;
+  if (r?.error) { const e = new Error(r.error.message || 'auth_error'); e.code = r.error.code || ''; e.status = r.error.status; throw e; }
+  return r?.data;
+}
 export const auth = {
   get signedIn() { return !!user; },
   get user() { return user; },
@@ -28,6 +34,14 @@ export const auth = {
   },
   invalidate() { jwt = null; exp = 0; },
   google: (next = '/account') => client.signIn.social({ provider: 'google', callbackURL: location.origin + next }),
+  // الحساب بالبريد: تسجيل، دخول، رمز تأكيد، واستعادة كلمة السر برمز
+  email: {
+    signIn: (email, password, rememberMe = true) => call(client.signIn.email({ email, password, rememberMe })),
+    signUp: (name, email, password) => call(client.signUp.email({ name, email, password })),
+    sendOtp: (email, type) => call(client.emailOtp.sendVerificationOtp({ email, type })),
+    verify: (email, otp) => call(client.emailOtp.verifyEmail({ email, otp })),
+    reset: (email, otp, password) => call(client.emailOtp.resetPassword({ email, otp, password })),
+  },
   async signOut() { try { await client.signOut(); } catch { /* تجاهل */ } user = null; jwt = null; exp = 0; },
 };
 

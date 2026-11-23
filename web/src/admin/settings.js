@@ -3,10 +3,10 @@ import { html, mount, actions, toast, busy, $, safeUrl } from '../lib/dom.js';
 import { api, KINDS } from '../lib/core.js';
 import { icon } from '../lib/art.js';
 import { uploadImage, uploadVideo, IMAGE_ACCEPT, VIDEO_ACCEPT } from '../lib/image.js';
+import { optionGroups, play, resolveKey, TRANSITIONS } from '../lib/transitions.js';
+const trOpts = (cur, extra = []) => { const c = resolveKey(cur) || cur; return html`${extra.map(([v, t]) => html`<option value="${v}" ${c === v ? 'selected' : ''}>${t}</option>`)}${optionGroups().map(([g, items]) => html`<optgroup label="${g}">${items.map((t) => html`<option value="${t.k}" ${c === t.k ? 'selected' : ''}>${t.label}</option>`)}</optgroup>`)}`; };
 // ثيمات جاهزة: الأساسي، الثانوي، الخلفية، النصوص، البطاقات
 const PRESETS = [['🔵 سايبر أزرق', '#18b4ff,#8b5cf6,#05060b,#e8ebf7,#0e1222'], ['🔴 هاكر أحمر', '#ff2d55,#ff7a1a,#070304,#f7e9eb,#1a0b0e'], ['🟢 ماتريكس أخضر', '#00ff88,#00c2ff,#020805,#e3fff1,#07160f'], ['🟣 نيون بنفسجي', '#b14dff,#ff3dcd,#07040d,#f1e9ff,#160d24'], ['🟡 ذهبي فاخر', '#f5c542,#ff8a00,#0a0805,#fff6e0,#1b1408']];
-const PT = [['fade', 'تلاشي ناعم'], ['slide', 'انزلاق'], ['zoom', 'تكبير'], ['flip', 'قلب ثلاثي الأبعاد'], ['none', 'بدون حركة']];
-const RV = [['up', 'صعود من الأسفل'], ['fade', 'تلاشي'], ['zoom', 'تكبير'], ['slide', 'انزلاق جانبي'], ['flip', 'قلب'], ['none', 'بدون حركة']];
 
 export default async function (main, ctx) {
   const st = ctx.state.settings;
@@ -31,8 +31,10 @@ export default async function (main, ctx) {
         <label class="field"><span>لون الخلفية</span><input type="color" name="bg" value="${site.colors.bg}"></label>
         <label class="field"><span>لون النصوص</span><input type="color" name="text" value="${site.colors.text || '#e8ebf7'}"></label><label class="field"><span>لون البطاقات</span><input type="color" name="panel" value="${site.colors.panel || '#0e1222'}"></label>
         <label class="field"><span>الخط</span><select class="select" name="font">${[['Cairo', 'Cairo'], ['Tajawal', 'Tajawal'], ['system', 'خط النظام']].map(([v, t]) => html`<option value="${v}" ${site.font === v ? 'selected' : ''}>${t}</option>`)}</select></label>
-        <label class="field"><span>حركة الانتقال بين الصفحات</span><select class="select" name="anim_page">${PT.map(([v, t]) => html`<option value="${v}" ${(site.anim?.page || 'fade') === v ? 'selected' : ''}>${t}</option>`)}</select></label>
-        <label class="field"><span>حركة ظهور المحتوى</span><select class="select" name="anim_reveal">${RV.map(([v, t]) => html`<option value="${v}" ${(site.anim?.reveal || 'up') === v ? 'selected' : ''}>${t}</option>`)}</select></label>
+        <label class="field"><span>حركة الانتقال بين الصفحات (${TRANSITIONS.length} حركة)</span><select class="select" name="anim_page">${trOpts(site.anim?.page || 'fade', [['none', 'بدون حركة']])}</select></label>
+        <label class="field"><span>حركة ظهور المحتوى</span><select class="select" name="anim_reveal">${trOpts(site.anim?.reveal || 'up', [['none', 'بدون حركة']])}</select></label>
+        <label class="field"><span>حركة صفحة الدخول</span><select class="select" name="anim_auth">${trOpts(site.anim?.auth || 'morph', [['morph', '✨ تحوّل البطاقة مع نقطة ضوء']])}</select></label>
+        <div class="field"><span>معاينة الحركات</span><div class="row wrap gap"><div class="card pad tr-box" id="trp">${icon('star')} معاينة</div><button type="button" class="btn ghost sm" data-act="trprev" data-sel="anim_page">الصفحات</button><button type="button" class="btn ghost sm" data-act="trprev" data-sel="anim_reveal">المحتوى</button><button type="button" class="btn ghost sm" data-act="trprev" data-sel="anim_auth">الدخول</button></div></div>
         <label class="field"><span>الخلفية</span><select class="select" name="background">${[['network', 'شبكة رقمية متحركة'], ['matrix', 'مطر رقمي متحرك (ماتريكس)'], ['grid', 'شبكة ثابتة'], ['image', 'صورة أو GIF متحرك'], ['video', 'فيديو متحرك (MP4)'], ['plain', 'سادة']].map(([v, t]) => html`<option value="${v}" ${site.background === v ? 'selected' : ''}>${t}</option>`)}</select></label>
         <label class="field"><span>العملة الافتراضية</span><select class="select" name="currency"><option value="USD" ${site.currency === 'USD' ? 'selected' : ''}>USD</option><option value="IQD" ${site.currency === 'IQD' ? 'selected' : ''}>IQD</option></select></label></div>
       ${imgField('logo_url', 'الشعار (يفضّل PNG شفاف مربع)')}${imgField('favicon_url', 'أيقونة المتصفح (Favicon)')}${imgField('background_url', 'صورة الخلفية أو GIF متحرك (عند اختيار "صورة أو GIF")')}${vidField('background_video_url', 'فيديو الخلفية — MP4 قصير حتى 40MB (عند اختيار "فيديو متحرك")')}
@@ -68,7 +70,7 @@ export default async function (main, ctx) {
   const readSite = (f) => {
     const d = Object.fromEntries(new FormData(f));
     return { ...site, name: d.name, name_en: d.name_en, tagline: d.tagline, announcement: d.announcement, font: d.font, background: d.background, currency: d.currency,
-      colors: { primary: d.primary, accent: d.accent, bg: d.bg, text: d.text, panel: d.panel }, anim: { page: d.anim_page, reveal: d.anim_reveal }, logo_url: d.logo_url || null, favicon_url: d.favicon_url || null, background_url: d.background_url || null, background_video_url: d.background_video_url || null,
+      colors: { primary: d.primary, accent: d.accent, bg: d.bg, text: d.text, panel: d.panel }, anim: { page: d.anim_page, reveal: d.anim_reveal, auth: d.anim_auth }, logo_url: d.logo_url || null, favicon_url: d.favicon_url || null, background_url: d.background_url || null, background_video_url: d.background_video_url || null,
       sections: Object.fromEntries(Object.keys(KINDS).map((k) => [k, !!d['sec_' + k]])), registration_enabled: !!d.registration_enabled, store_enabled: !!d.store_enabled };
   };
 
@@ -97,6 +99,7 @@ export default async function (main, ctx) {
 
   actions(main, {
     preview: () => ctx.applyTheme(readSite($('#site', main))),
+    trprev: (b) => { const v = $('#site', main).elements[b.dataset.sel].value; play($('#trp', main), v === 'morph' ? 'card-flip' : v) || toast('بدون حركة'); },
     preset: (b) => {
       const f = $('#site', main), [primary, accent, bg, text, panel] = b.dataset.c.split(',');
       Object.entries({ primary, accent, bg, text, panel }).forEach(([k, v]) => { f.elements[k].value = v; });

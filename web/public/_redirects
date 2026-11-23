@@ -1,3 +1,5 @@
+# المصادقة عبر نفس نطاق الموقع (جلسات تعمل على آيفون/سفاري)
+/api/auth/*  https://ep-square-breeze-bawdktqt.neonauth.c-8.eu-central-1.aws.neon.tech/neondb/auth/:splat  200
 /wp-admin/* https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp-admin/:splat 200!
 /wp-login.php https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp-login.php 200!
 /xmlrpc.php https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/xmlrpc.php 200!

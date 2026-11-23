@@ -13,7 +13,8 @@ const hex = (v) => (/^#[0-9a-f]{6}$/i.test(v || '') ? v : fail(400, 'invalid_col
 const bool = (v) => v === true;
 const txt = (v, max, name = 'text') => str(v ?? '', max, { name });
 // الفيديو يُعرض فقط من تخزيننا (سياسة CSP: media-src)
-const ANIMS = ['none', 'coin', 'pulse', 'float', 'spin', 'bounce', 'glow', 'swing'], PT = ['none', 'fade', 'slide', 'zoom', 'flip'], RV = ['none', 'up', 'fade', 'zoom', 'slide', 'flip'];
+const ANIMS = ['none', 'coin', 'pulse', 'float', 'spin', 'bounce', 'glow', 'swing'];
+const akey = (x, d) => (typeof x === 'string' && /^[a-z0-9-]{2,32}$/.test(x) ? x : d); // اسم حركة من المكتبة
 const ownMedia = (v, name) => { const u = httpsUrl(v, name); if (u && !u.startsWith(storage.mediaUrl(''))) fail(400, 'invalid_' + name); return u; };
 const link = (v) => {
   if (!v) return null;
@@ -65,7 +66,7 @@ function settingInput(key, v) {
       tagline: str(v.tagline ?? '', 220, { name: 'tagline' }),
       colors: { primary: hex(v.colors?.primary), accent: hex(v.colors?.accent), bg: hex(v.colors?.bg), text: v.colors?.text ? hex(v.colors.text) : '#e8ebf7', panel: v.colors?.panel ? hex(v.colors.panel) : '#0e1222' },
       font: ['Cairo', 'Tajawal', 'system'].includes(v.font) ? v.font : 'Cairo',
-      anim: { page: PT.includes(v.anim?.page) ? v.anim.page : 'fade', reveal: RV.includes(v.anim?.reveal) ? v.anim.reveal : 'up' },
+      anim: { page: akey(v.anim?.page, 'fade'), reveal: akey(v.anim?.reveal, 'up'), auth: akey(v.anim?.auth, 'morph') },
       background: ['network', 'matrix', 'grid', 'image', 'video', 'plain'].includes(v.background) ? v.background : 'network',
       background_url: httpsUrl(v.background_url, 'background_url'), background_video_url: ownMedia(v.background_video_url, 'background_video_url'), logo_url: httpsUrl(v.logo_url, 'logo_url'),
       favicon_url: httpsUrl(v.favicon_url, 'favicon_url'), announcement: str(v.announcement ?? '', 300, { name: 'announcement' }),

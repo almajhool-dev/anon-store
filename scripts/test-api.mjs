@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 // اختبار تكاملي حقيقي للواجهة الخلفية مع Neon Auth + قاعدة البيانات + التخزين
 // الاستخدام: node scripts/test-api.mjs   (API_URL اختياري؛ الافتراضي الخادم المحلي)
 // FULL_SECURITY=1 يفعّل اختبارات الحظر التلقائي (محلياً فقط لأنها تعتمد على x-test-ip)
@@ -33,6 +34,18 @@ async function authUser(label) {
     const r = await fetch(`${AUTH}/sign-up/email`, { method: 'POST', headers: { 'content-type': 'application/json', origin: ORIGIN }, body: JSON.stringify({ ...creds, name: 'QA ' + label }) });
     if (!r.ok) throw new Error('signup failed ' + r.status);
     writeFileSync(f, JSON.stringify(creds));
+    // فرع الاختبار يطلب تأكيد البريد: الرمز محفوظ SHA-256 فنسترجعه بالتجربة (للاختبار فقط) ثم نؤكد
+    for (let t = 0; t < 10; t++) {
+      const [row] = await owner.query(`select value from neon_auth.verification where identifier = $1 order by "createdAt" desc limit 1`, [`email-verification-otp-${creds.email}`]).catch(() => []);
+      const h = row?.value?.split(':')[0];
+      if (h) {
+        let otp = null;
+        for (let i = 0; i < 1e6 && !otp; i++) { const c = String(i).padStart(6, '0'); if (createHash('sha256').update(c).digest('base64url') === h) otp = c; }
+        if (otp) await fetch(`${AUTH}/email-otp/verify-email`, { method: 'POST', headers: { 'content-type': 'application/json', origin: ORIGIN }, body: JSON.stringify({ email: creds.email, otp }) });
+        break;
+      }
+      await new Promise((res) => setTimeout(res, 700));
+    }
   }
   const r = await fetch(`${AUTH}/sign-in/email`, { method: 'POST', headers: { 'content-type': 'application/json', origin: ORIGIN }, body: JSON.stringify(creds) });
   const cookie = (r.headers.get('set-cookie') || '').split(';')[0];
