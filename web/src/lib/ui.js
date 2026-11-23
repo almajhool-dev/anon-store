@@ -1,5 +1,5 @@
 // مكوّنات الواجهة المشتركة: بطاقة المنتج، السعر، النجوم، الحالات الفارغة، النص المنسق
-import { html, raw, esc, safeUrl } from './dom.js';
+import { html, raw, esc, safeUrl, errText, CHUNK_ERR } from './dom.js';
 import { icon, art } from './art.js';
 import { fmtNum, fmtPrice, KINDS } from './core.js';
 
@@ -19,7 +19,10 @@ export const empty = (msg, ic = 'grid') => html`<div class="empty card">${icon(i
 export const grid = (items, msg = 'لا توجد منتجات هنا بعد — ترقّب الإضافات القادمة') => (items.length ? html`<div class="grid">${items.map(card)}</div>` : empty(msg));
 export const skeleton = (n = 4) => html`<div class="grid">${Array.from({ length: n }, () => html`<div class="card pcard sk"><div class="pcover"></div><div class="pbody"><i></i><i></i><i></i></div></div>`)}</div>`;
 export const loader = () => html`<div class="center-box"><span class="spinner"></span></div>`;
-export const errorBox = (e, retry = true) => html`<div class="empty card">${icon('shield')}<p>${e?.message || 'تعذر التحميل'}</p>${retry ? html`<button class="btn ghost sm" data-act="reload">إعادة المحاولة</button>` : ''}</div>`;
+// خطأ نسخة قديمة: زر يعيد تحميل الصفحة كاملة (إعادة المحاولة داخل الصفحة لن تجد الملف)
+export const errorBox = (e, retry = true) => CHUNK_ERR.test(String(e?.message ?? e ?? ''))
+  ? html`<div class="empty card">${icon('refresh')}<p>${errText(e)}</p><button class="btn primary sm" data-hard-reload>${icon('refresh')} تحديث الصفحة</button></div>`
+  : html`<div class="empty card">${icon('shield')}<p>${errText(e)}</p>${retry ? html`<button class="btn ghost sm" data-act="reload">إعادة المحاولة</button>` : ''}</div>`;
 
 export function countdown(root) {
   const tick = () => {

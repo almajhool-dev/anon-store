@@ -4,7 +4,7 @@ import '@fontsource/tajawal/400.css';
 import '@fontsource/tajawal/700.css';
 import './styles.css';
 import './design.css';
-import { html, mount, $, $$, toast, safeUrl } from './lib/dom.js';
+import { html, mount, $, $$, toast, safeUrl, recoverChunk, errText } from './lib/dom.js';
 import { api, auth, KINDS } from './lib/core.js';
 import { icon, logo } from './lib/art.js';
 import { startFx, setFxTheme, reveal, autoReveal } from './lib/fx.js';
@@ -87,7 +87,7 @@ export async function refreshMe() {
   renderHeader();
 }
 export const isAdmin = () => ['admin', 'owner'].includes(state.me?.role);
-export const setTitle = (t) => { document.title = t ? `${t} | ${state.settings.site.name}` : `${state.settings.site.name} | ${state.settings.site.name_en || 'Anonymous Programmer'}`; };
+export const setTitle = (t) => { const s = state.settings.site; document.title = t ? `${t} | ${s.name}` : s.name_en ? `${s.name} | ${s.name_en}` : s.name; };
 
 // كل شعارات الموقع (الرأس، القائمة الجانبية، الفوتر) تأخذ حركة الشعار المختارة — افتراضياً عملة 3D
 const brandMark = () => { const a = getContent(state).hero.logo_anim; return html`<span class="brand-mark ia-${a}" data-fx="${a}">${logo(state.settings.site.logo_url)}</span>`; };
@@ -108,7 +108,7 @@ function renderHeader() {
   const ava = me ? (me.avatar ? html`<img class="avatar" src="${safeUrl(me.avatar)}" alt="" referrerpolicy="no-referrer">` : html`<span class="avatar">${(me.name || '?')[0]}</span>`) : '';
   mount(el, html`${s.announcement ? html`<div class="announce">${s.announcement}</div>` : ''}
   <div class="container">
-    <a class="brand" href="/" aria-label="الرئيسية">${brandMark()}<span>${s.name}<small>${s.name_en || 'Anonymous Programmer'}</small></span></a>
+    <a class="brand" href="/" aria-label="الرئيسية">${brandMark()}<span>${s.name}${s.name_en ? html`<small>${s.name_en}</small>` : ''}</span></a>
     <nav class="nav" aria-label="التنقل الرئيسي">${navItems().map(([h, t]) => html`<a href="${h}">${t}</a>`)}</nav>
     <div class="hdr-actions">
       <button class="icon-btn" data-search aria-label="بحث">${icon('search')}</button>
@@ -137,13 +137,13 @@ function renderLayout() {
   <main id="view" tabindex="-1"></main>
   <footer class="ftr" data-sec="footer"><div class="container">
     <div class="cols">
-      <div><a class="brand" href="/">${brandMark()}<span>${s.name}<small>${s.name_en || ''}</small></span></a><p class="muted small mt">${c.footer.about || s.tagline}</p>
+      <div><a class="brand" href="/">${brandMark()}<span>${s.name}${s.name_en ? html`<small>${s.name_en}</small>` : ''}</span></a><p class="muted small mt">${c.footer.about || s.tagline}</p>
         <div class="socials">${socialLinks(so).map(([u, ic, t]) => html`<a class="icon-btn" href="${u}" target="_blank" rel="noopener" aria-label="${t}">${icon(ic)}</a>`)}</div></div>
       <div><h4>الأقسام</h4>${Object.keys(KINDS).filter((k) => s.sections?.[k] !== false).map((k) => html`<a href="${SECTIONS[k].path}">${c.sections[k].title}</a>`)}</div>
       <div><h4>المتجر</h4><a href="/latest">أحدث المنتجات</a><a href="/top">الأكثر تحميلاً</a><a href="/free">المنتجات المجانية</a><a href="/paid">المنتجات المدفوعة</a></div>
       <div><h4>الدعم</h4><a href="/contact">التواصل والدعم</a><a href="/faq">الأسئلة الشائعة</a><a href="/account">حسابي</a>${fpages.map((p) => html`<a href="${p.url || '/page/' + p.slug}">${p.title}</a>`)}</div>
     </div>
-    <div class="copy"><span>© ${new Date().getFullYear()} ${c.footer.text}</span><button type="button" class="lite-btn" data-lite aria-pressed="${lite() ? 'true' : 'false'}">⚡ <span>${lite() ? 'الوضع الخفيف مفعّل' : 'الوضع الخفيف'}</span></button><span class="ltr">Anonymous Programmer Store</span></div>
+    <div class="copy"><span>© ${new Date().getFullYear()} ${c.footer.text}</span><button type="button" class="lite-btn" data-lite aria-pressed="${lite() ? 'true' : 'false'}">⚡ <span>${lite() ? 'الوضع الخفيف مفعّل' : 'الوضع الخفيف'}</span></button>${s.name_en ? html`<span class="ltr">${s.name_en}</span>` : ''}</div>
   </div></footer>`);
   renderHeader();
   startModePicker();
@@ -171,15 +171,9 @@ function highlight() {
 }
 
 let navId = 0, cleanup = null, trackT;
-// بعد كل نشر تُحذف ملفات النسخة السابقة: التبويب المفتوح من قبل يفشل في تحميل صفحة ⇒ نعيد التحميل مرة واحدة فتصل النسخة الجديدة
-const CHUNK_ERR = /dynamically imported module|Importing a module script failed|error loading dynamically imported module|Unable to preload CSS/i;
-function reloadForUpdate() {
-  // بلا تخزين جلسة لا نعيد التحميل تلقائياً (منعاً لحلقة إعادة تحميل لا تنتهي)
-  try { if (Date.now() - Number(sessionStorage.getItem('chunk_reload') || 0) < 20000) return false; sessionStorage.setItem('chunk_reload', String(Date.now())); } catch { return false; }
-  location.reload();
-  return true;
-}
-addEventListener('vite:preloadError', (e) => { if (reloadForUpdate()) e.preventDefault(); });
+// تبويب من نسخة قديمة فشل في تحميل ملف (نادر: ملفات آخر النسخ تبقى منشورة — scripts/carry-assets.mjs) ⇒ إعادة تحميل واحدة
+addEventListener('vite:preloadError', (e) => { if (recoverChunk(e.payload || 'dynamically imported module')) e.preventDefault(); });
+document.addEventListener('click', (e) => { if (e.target.closest('[data-hard-reload]')) location.reload(); });
 
 export async function go(path, replace = false) {
   if (isStale()) { location[replace ? 'replace' : 'assign'](path); return; } // نُشرت نسخة جديدة: انتقال كامل يحمّلها
@@ -203,15 +197,15 @@ async function render(scroll) {
       // بين تبويبات لوحة المدير تبقى الصفحة وقائمتها كما هي ويُستبدل المحتوى فقط (admin.js)
       const keep = path.startsWith('/admin') && lastPath.startsWith('/admin') && view.querySelector(':scope > .adm');
       if (!keep) { view.innerHTML = ''; if (scroll) scrollTo({ top: 0 }); }
-      cleanup = await mod.default(view, m, { state, go, refreshMe, setTitle, isAdmin, applyTheme, renderHeader });
+      cleanup = await mod.default(view, m, { state, go, refreshMe, setTitle, isAdmin, applyTheme, renderHeader, cacheSettings });
       // حركة الانتقال بين الصفحات: ليس عند أول ظهور، ولا بين تبويبات لوحة المدير (القائمة ثابتة وتتحرك حبتها فقط)
       const inAdmin = lastPath.startsWith('/admin') && location.pathname.startsWith('/admin');
       if (!firstPaint && !inAdmin) play(view, state.settings.site.anim?.page || 'fade');
       firstPaint = false; lastPath = location.pathname;
     } catch (e) {
-      if (CHUNK_ERR.test(e?.message || '') && reloadForUpdate()) return;
+      if (recoverChunk(e)) return;
       console.error(e);
-      if (id === navId) mount(view, html`<div class="container page"><div class="empty card">${icon('shield')}<p>${e.message || 'تعذر تحميل الصفحة'}</p><a class="btn ghost sm" href="/">الرئيسية</a></div></div>`);
+      if (id === navId) mount(view, html`<div class="container page"><div class="empty card">${icon('shield')}<p>${errText(e)}</p><a class="btn ghost sm" href="/">الرئيسية</a></div></div>`);
     }
     return finish();
   }
@@ -262,6 +256,10 @@ document.addEventListener('click', (e) => {
 const CK = 'settings_v1';
 const readCache = () => { try { const j = JSON.parse(localStorage.getItem(CK) || 'null'); return j && Date.now() - j.t < 6048e5 ? j.s : null; } catch { return null; } };
 const writeCache = (s) => { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), s })); } catch { /* المساحة ممتلئة */ } };
+// بعد حفظ المدير: نسخة الجهاز تُحدَّث فوراً فلا يظهر القديم عند تحديث الصفحة
+const cacheSettings = () => { if (!DSP) writeCache(state.settings); };
+let syncT = 0; // أي حفظ في لوحة المدير ← تُجلب الإعدادات المنشورة وتُخزَّن على الجهاز (تحديث الصفحة يُظهر الجديد فوراً)
+addEventListener('settings:changed', () => { clearTimeout(syncT); syncT = setTimeout(async () => { const s = await api.get('/settings').catch(() => null); if (s && !DSP) writeCache(s); }, 400); });
 function useSettings(s) {
   state.settings = { social: {}, faq: [], payments: {}, ...(s || {}) };
   state.settings.site = { ...DEFAULT_SITE, ...(state.settings.site || {}) };

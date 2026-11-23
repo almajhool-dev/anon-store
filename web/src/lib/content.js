@@ -30,13 +30,14 @@ export const DEFAULT_CONTENT = {
   footer: { text: 'المبرمج المجهول — جميع الحقوق محفوظة', about: '' },
 };
 
-const merge = (d, v = {}) => { const o = { ...d }; for (const k in v) if (v[k] !== '' && v[k] != null) o[k] = v[k]; return o; };
+// النص الفارغ حذفٌ مقصود من المدير فلا يعود الافتراضي — إلا حقول لا تصح فارغة (اسم القسم في القائمة وعنوانه)
+const merge = (d, v = {}, need = []) => { const o = { ...d }; for (const k in v) if (v[k] != null && !(v[k] === '' && need.includes(k))) o[k] = v[k]; return o; };
 export function getContent(state) {
   const c = state.settings.content || {};
   return {
     hero: merge(DEFAULT_CONTENT.hero, c.hero),
-    sections: Object.fromEntries(Object.keys(SECTIONS).map((k) => [k, merge(DEFAULT_CONTENT.sections[k], c.sections?.[k])])),
-    features: c.features?.length ? c.features : DEFAULT_CONTENT.features,
+    sections: Object.fromEntries(Object.keys(SECTIONS).map((k) => [k, merge(DEFAULT_CONTENT.sections[k], c.sections?.[k], ['nav', 'title'])])),
+    features: Array.isArray(c.features) ? c.features : DEFAULT_CONTENT.features,
     banners: c.banners || [],
     show: { ...DEFAULT_CONTENT.show, ...(c.show || {}) },
     contact: merge(DEFAULT_CONTENT.contact, c.contact),

@@ -1,6 +1,6 @@
 // لوحة المدير: الهيكل + نظرة عامة، الطلبات، المستخدمون، الرسائل، الإشعارات، التخزين، الأمان، السجل
 import { railOn } from '../lib/liquid.js';
-import { html, mount, actions, toast, confirmBox, promptBox, busy, $ } from '../lib/dom.js';
+import { html, mount, actions, toast, confirmBox, promptBox, busy, $, recoverChunk } from '../lib/dom.js';
 import { api, fmtNum, fmtBytes, fmtDate, fmtDateTime, fmtPrice, ago } from '../lib/core.js';
 import { icon } from '../lib/art.js';
 import { loader, errorBox, empty } from '../lib/ui.js';
@@ -197,7 +197,7 @@ export default async function (view, m, ctx) {
     if (tab === 'perf') return await (await import('./perf.js')).default(main, ctx);
     if (tab === 'content' || tab === 'pages') return await (await import('./content.js')).default(main, ctx, tab);
     await SIMPLE[tab](main, ctx);
-  } catch (e) { mount(main, errorBox(e)); } finally { main.style.minHeight = ''; }
+  } catch (e) { if (!recoverChunk(e)) mount(main, errorBox(e)); } finally { main.style.minHeight = ''; }
 }
 
 // تحميل مسبق لتبويبات اللوحة الثقيلة وقت الفراغ (مرة واحدة) فيصبح فتحها لاحقاً فورياً

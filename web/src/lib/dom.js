@@ -25,12 +25,30 @@ export function actions(el, map) {
 
 export const debounce = (fn, ms = 300) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
+// أخطاء تقنية بالإنجليزية ← رسائل عربية مفهومة (لا يرى الزائر رسالة متصفح خام أبداً)
+export const CHUNK_ERR = /dynamically imported module|Importing a module script failed|error loading dynamically imported module|Unable to preload CSS|Failed to load module script/i;
+const NET_ERR = /Failed to fetch|NetworkError|Load failed|Network request failed/i;
+export function errText(e) {
+  const m = String(e?.message ?? e ?? '');
+  if (CHUNK_ERR.test(m)) return 'صدرت نسخة جديدة من الموقع — حدّث الصفحة لإكمال التصفح.';
+  if (NET_ERR.test(m)) return 'تعذّر الاتصال بالخادم — تحقّق من الإنترنت ثم أعد المحاولة.';
+  return m || 'حدث خطأ غير متوقع — أعد المحاولة.';
+}
+// صفحة من نسخة قديمة لم تعد ملفاتها موجودة: إعادة تحميل واحدة تجلب النسخة الجديدة
+// (حارس 20 ث، وبلا تخزين جلسة لا نعيد تلقائياً منعاً لحلقة لا تنتهي)
+export function recoverChunk(e) {
+  if (!CHUNK_ERR.test(String(e?.message ?? e ?? ''))) return false;
+  try { if (Date.now() - Number(sessionStorage.getItem('chunk_reload') || 0) < 20000) return false; sessionStorage.setItem('chunk_reload', String(Date.now())); } catch { return false; }
+  location.reload();
+  return true;
+}
+
 let toastBox;
 export function toast(msg, type = 'info', ms = 3800) {
   if (!toastBox) { toastBox = document.createElement('div'); toastBox.className = 'toasts'; toastBox.setAttribute('role', 'status'); document.body.append(toastBox); }
   const t = document.createElement('div');
   t.className = `toast toast-${type}`;
-  t.textContent = msg;
+  t.textContent = /^err/.test(type) ? errText(msg) : msg;
   toastBox.append(t);
   requestAnimationFrame(() => t.classList.add('show'));
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, ms);

@@ -44,13 +44,15 @@ const listBtns = (list, i, n) => html`<div class="row end"><button type="button"
 function contentEditor(main, ctx) {
   const st = ctx.state.settings;
   const c = structuredClone(getContent(ctx.state));
+  // مسودة الاسم والوصف: تبقى عند إعادة رسم المحرر وتُحفظ مع «حفظ كل التغييرات»
+  const s0 = ctx.state.settings.site || {}, idv = { name: s0.name || '', name_en: s0.name_en ?? '', tagline: s0.tagline ?? '' };
   let v = Date.now();
   const draw = () => {
     const h = c.hero, site = ctx.state.settings.site || {};
     mount(main, html`<h2>محتوى الموقع</h2><p class="muted small">كل نص وصورة في الصفحة الرئيسية والأقسام قابلة للتعديل. الصور تُرفع من الهاتف مباشرة وتُصغَّر تلقائياً. لا تنسَ الضغط على «حفظ» بالأسفل.</p>
     <div class="card pad"><h3>${icon('star')} هوية الموقع: الاسم والشعار</h3>
-      <div class="fgrid"><label class="field"><span>اسم الموقع</span><input class="input" id="id-name" maxlength="80" value="${site.name || ''}"></label><label class="field"><span>الاسم بالإنجليزي</span><input class="input ltr" id="id-name-en" maxlength="80" value="${site.name_en || ''}"></label></div>
-      <label class="field"><span>الوصف المختصر</span><input class="input" id="id-tagline" maxlength="220" value="${site.tagline || ''}"></label>
+      <div class="fgrid"><label class="field"><span>اسم الموقع</span><input class="input" id="id-name" maxlength="80" value="${idv.name}"></label><label class="field"><span>الاسم بالإنجليزي</span><input class="input ltr" id="id-name-en" maxlength="80" value="${idv.name_en}" placeholder="اتركه فارغاً لإخفائه"></label></div>
+      <label class="field"><span>الوصف المختصر</span><input class="input" id="id-tagline" maxlength="220" value="${idv.tagline}"></label>
       <button type="button" class="btn sm" data-act="identity">${icon('check')} حفظ الاسم والوصف</button>
       <div class="field mt"><span>شعار الموقع — يظهر أعلى الموقع وفي الواجهة الرئيسية</span><div class="img-pick">${site.logo_url ? html`<img src="${safeUrl(site.logo_url)}" alt="" class="sq">` : html`<span class="muted small">الشعار الافتراضي</span>`}
         <label class="btn primary sm">${icon('upload')} تغيير الشعار<input type="file" accept="${IMAGE_ACCEPT}" data-logo hidden></label></div></div>
@@ -103,7 +105,17 @@ function contentEditor(main, ctx) {
     <div class="savebar"><button class="btn primary lg block" data-act="save">${icon('check')} حفظ كل التغييرات</button></div>`);
   };
 
+  const IDF = { 'id-name': 'name', 'id-name-en': 'name_en', 'id-tagline': 'tagline' };
+  // يحفظ الاسم والوصف إن تغيّرا (الفارغ مقبول: يُخفي الاسم الإنجليزي/الوصف)
+  const saveIdentity = async () => {
+    const site = ctx.state.settings.site, next = { name: idv.name.trim(), name_en: idv.name_en.trim(), tagline: idv.tagline.trim() };
+    if (next.name === site.name && next.name_en === (site.name_en ?? '') && next.tagline === (site.tagline ?? '')) return false;
+    const r = await api.put('/admin/settings/site', { value: { ...site, ...next } });
+    ctx.state.settings.site = { ...site, ...r.value }; ctx.cacheSettings?.(); ctx.renderHeader?.(); ctx.setTitle?.();
+    return true;
+  };
   main.addEventListener('input', (e) => {
+    if (IDF[e.target.id]) { idv[IDF[e.target.id]] = e.target.value; return; }
     const p = e.target.dataset.path;
     if (!p) return;
     set(c, p, e.target.type === 'checkbox' ? e.target.checked : p === 'hero.terminal' ? e.target.value.split('\n').map((x) => x.trimEnd().slice(0, 90)).filter(Boolean).slice(0, 8) : p === 'intro.duration' ? Number(e.target.value) : e.target.value);
@@ -137,12 +149,8 @@ function contentEditor(main, ctx) {
     intro: () => showIntro(c.intro, ctx.state.settings.site, { force: true }),
     identity: async (b) => {
       busy(b, true);
-      try {
-        const s = { ...ctx.state.settings.site, name: $('#id-name', main).value.trim(), name_en: $('#id-name-en', main).value.trim(), tagline: $('#id-tagline', main).value.trim() };
-        const r = await api.put('/admin/settings/site', { value: s });
-        ctx.state.settings.site = r.value; ctx.renderHeader?.();
-        toast('تم حفظ الاسم ✅ — ظاهر للزوار الآن', 'ok');
-      } catch (er) { toast(er.message, 'error'); } finally { busy(b, false); }
+      try { toast(await saveIdentity() ? 'تم حفظ الاسم ✅ — ظاهر للزوار الآن' : 'لا تغييرات في الاسم أو الوصف', 'ok'); }
+      catch (er) { toast(er.message, 'error'); } finally { busy(b, false); }
     },
     imgdel: (b) => { set(c, b.dataset.path, null); draw(); },
     add: (b) => { c[b.dataset.list].push(b.dataset.list === 'banners' ? { image_url: null, title: 'عنوان البنر', text: '', button: '', link: '' } : { icon: 'star', title: 'ميزة جديدة', text: '' }); draw(); },
@@ -151,7 +159,7 @@ function contentEditor(main, ctx) {
     down: (b) => { const a = c[b.dataset.list], i = Number(b.dataset.i); [a[i + 1], a[i]] = [a[i], a[i + 1]]; draw(); },
     save: async (b) => {
       busy(b, true);
-      try { const r = await api.put('/admin/settings/content', { value: c }); st.content = r.value; await ctx.refreshMe(); toast('تم الحفظ ✅ — التغييرات ظاهرة الآن للزوار', 'ok'); }
+      try { await saveIdentity(); const r = await api.put('/admin/settings/content', { value: c }); st.content = r.value; ctx.cacheSettings?.(); await ctx.refreshMe(); ctx.renderHeader?.(); toast('تم الحفظ ✅ — التغييرات ظاهرة الآن للزوار', 'ok'); }
       catch (er) { toast(er.message, 'error'); } finally { busy(b, false); }
     },
   });

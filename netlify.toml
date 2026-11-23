@@ -1,6 +1,6 @@
 # النشر التلقائي من GitHub (بعد ربط المستودع في Netlify) — الرؤوس الأمنية والتوجيه في web/public/_headers و _redirects
 [build]
-  command = "npm ci && npm run build:web"
+  command = "npm ci && npm run build:web && node scripts/carry-assets.mjs"
   publish = "dist/web"
 [build.environment]
   NODE_VERSION = "22"

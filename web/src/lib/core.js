@@ -71,6 +71,7 @@ async function req(method, path, body) {
   try { r = await fetch(API_URL + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }); } catch { throw new ApiError(0, 'network'); }
   const data = await r.json().catch(() => ({}));
   if (!r.ok) { if (r.status === 401 && data.error === 'invalid_token') auth.invalidate(); throw new ApiError(r.status, data.error || 'server_error', data); }
+  if (method !== 'GET' && /^\/admin\/(settings|design)\b/.test(path)) dispatchEvent(new Event('settings:changed')); // main.js يحدّث نسخة الجهاز
   return data;
 }
 export const api = {
