@@ -28,7 +28,8 @@ export async function processImage(file, { max = 1920, square = false, type = nu
   let sx = 0, sy = 0, sw = bmp.width, sh = bmp.height;
   if (square && sw !== sh) { const s = Math.min(sw, sh); sx = (sw - s) / 2; sy = (sh - s) / 2; sw = sh = s; }
   const scale = square ? max / sw : Math.min(1, max / Math.max(sw, sh));
-  if (scale === 1 && sw === bmp.width && sh === bmp.height && file.size < 1.5 * 1024 * 1024 && (type ? file.type === type : OK.includes(file.type))) { bmp.close?.(); return file; }
+  // نُبقي الأصل فقط إن كان صغيراً فعلاً (PNG الكبير يُحوَّل لـ WebP أصغر بعشرات المرات)
+  if (scale === 1 && sw === bmp.width && sh === bmp.height && file.size < (file.type === 'image/png' ? 100 : 300) * 1024 && (type ? file.type === type : OK.includes(file.type))) { bmp.close?.(); return file; }
   const cv = document.createElement('canvas');
   cv.width = Math.max(1, Math.round(sw * scale)); cv.height = Math.max(1, Math.round(sh * scale));
   const g = cv.getContext('2d');
@@ -39,8 +40,12 @@ export async function processImage(file, { max = 1920, square = false, type = nu
   const blob = (t, q) => new Promise((r) => cv.toBlob(r, t, q));
   const want = type || 'image/webp';
   let out = await blob(want, 0.9);
-  if (!out || out.type !== want) out = await blob(want === 'image/jpeg' || file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.9);
-  return out;
+  if (!out || out.type !== want) {
+    // متصفح لا يرمّز WebP (مثل Safari القديم): JPEG للصور المعتمة (أصغر بكثير)، وPNG فقط عند وجود شفافية
+    const alpha = want !== 'image/jpeg' && (() => { try { const d = g.getImageData(0, 0, cv.width, cv.height).data; for (let i = 3; i < d.length; i += 28) if (d[i] < 250) return true; } catch { return true; } return false; })();
+    out = await blob(want === 'image/jpeg' || !alpha ? 'image/jpeg' : 'image/png', 0.88);
+  }
+  return !type && out && out.size >= file.size && OK.includes(file.type) && scale === 1 ? file : out;
 }
 
 const PRESET = { app_icon: { max: 512, square: true, type: 'image/png', keepIco: false }, share: { max: 1200, type: 'image/jpeg', keepIco: false } };

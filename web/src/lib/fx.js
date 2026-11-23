@@ -4,6 +4,8 @@ let ctx, cv, w, h, pts = [], raf = 0, dpr = 1, color = [24, 180, 255], color2 = 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const hex = (x) => [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16));
 const ANIM = new Set(['network', 'matrix']);
+const lvl = () => Number(document.body?.dataset.q) || 4, on = () => ANIM.has(mode) && lvl() > 2; // LOW/MEDIUM: بلا خلفية متحركة
+let lastF = 0, args = null;
 const CH = 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي0123456789ABCDEF<>/{}$#';
 let drops = [], bgc = [5, 6, 11], last = 0;
 function matrix(t) {
@@ -34,6 +36,9 @@ function resize() {
 }
 
 function frame() {
+  const now = performance.now();
+  if (lvl() === 3 && now - lastF < 33) { if (!reduce) raf = requestAnimationFrame(frame); return; } // HIGH: ~30 إطاراً/ث
+  lastF = now;
   ctx.clearRect(0, 0, w, h);
   const max = w < 700 ? 110 : 140;
   for (const p of pts) {
@@ -69,20 +74,23 @@ export function startFx() {
   addEventListener('resize', () => { clearTimeout(t); t = setTimeout(resize, 200); });
   document.addEventListener('visibilitychange', () => {
     cancelAnimationFrame(raf);
-    if (!document.hidden && ANIM.has(mode)) raf = requestAnimationFrame(loop());
+    if (!document.hidden && on()) raf = requestAnimationFrame(loop());
   });
-  if (ANIM.has(mode)) raf = requestAnimationFrame(loop());
+  if (on()) raf = requestAnimationFrame(loop());
 }
 
 export function setFxTheme(primary, accent, bgMode, bg) {
+  args = [primary, accent, bgMode, bg];
   try { color = hex(primary); color2 = hex(accent); if (bg) bgc = hex(bg); } catch { /* افتراضي */ }
   mode = bgMode || 'network';
   cancelAnimationFrame(raf);
   if (!cv) return;
-  cv.style.display = ANIM.has(mode) ? 'block' : 'none';
+  cv.style.display = on() ? 'block' : 'none';
   ctx.clearRect(0, 0, w, h); drops = []; last = 0;
-  if (ANIM.has(mode)) raf = requestAnimationFrame(loop());
+  if (on()) raf = requestAnimationFrame(loop());
 }
+
+addEventListener('ds:q', () => { if (args) setFxTheme(...args); });
 
 const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => {
   for (const e of es) if (e.isIntersecting) {

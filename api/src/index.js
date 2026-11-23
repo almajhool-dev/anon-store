@@ -2,6 +2,7 @@
 import { createSql } from './sql.js';
 import { seal, open } from './crypto.js';
 import { HttpError, verifyJWT, inspect, isProbe, isAttackTool, BOT_UA, rate, strike, clearStrikes, once, sha, decodeSafe } from './lib.js';
+import { matchDecoy, decoyResponse, verifyEdge, canaryIn, CATS } from './decoys.js';
 import userRoutes from './routes.js';
 import adminRoutes from './admin.js';
 
@@ -39,8 +40,18 @@ const routes = [];
 const add = (method, path, auth, handler, opt = {}) => {
   const keys = [];
   const re = new RegExp('^' + path.replace(/:(\w+)/g, (_, k) => { keys.push(k); return '([^/]+)'; }) + '$');
-  routes.push({ method, re, keys, auth, handler, ...opt });
+  routes.push({ method, path, re, keys, auth, handler, ...opt });
 };
+// زمن المسارات في هذه النسخة (لوحة الأداء): آخر 2000 طلب
+const STATS = []; let statN = 0;
+const routeStats = () => {
+  const g = new Map();
+  for (const s of STATS) if (s) (g.get(s[0]) || g.set(s[0], []).get(s[0])).push(s[1]);
+  return [...g].map(([route, a]) => { a.sort((x, y) => x - y); return { route, n: a.length, p50: Math.round(a[a.length >> 1]), p95: Math.round(a[Math.min(a.length - 1, Math.floor(a.length * 0.95))]) }; })
+    .sort((x, y) => y.n - x.n).slice(0, 15);
+};
+// قياس زمن قاعدة البيانات لكل طلب (يظهر في Server-Timing ولوحة الأداء)
+const timed = (db, c) => new Proxy(db, { get: (o, k) => (typeof o[k] === 'function' ? async (...a) => { const t = performance.now(); try { return await o[k](...a); } finally { c.dbms += performance.now() - t; } } : o[k]) });
 userRoutes(add);
 adminRoutes(add);
 
@@ -66,6 +77,18 @@ async function getSetting(key) {
   return v;
 }
 
+// مفتاح توقيع وكيل Netlify (ops.secrets) — يُقرأ مرة لكل نسخة
+let edgeKeyP = null;
+const edgeKey = () => (edgeKeyP ??= ownerQ(`select convert_from(value, 'UTF8') as k from ops.secrets where name = 'edge_sign_v1'`).then((r) => r[0]?.k || '').catch(() => { edgeKeyP = null; return ''; }));
+// رد الفخ: محتوى اصطناعي معزول + تسجيل + عقوبة عند معرفة العنوان الحقيقي (حظر تلقائي عند تجاوز الحد)
+async function decoy(c, d, via, real, extra = {}) {
+  const w = (CATS[d.cat] || CATS.trap)[1];
+  await c.secLog('decoy_hit', w >= 10 ? 'high' : 'medium', { id: d.id, cat: d.cat, path: d.path.slice(0, 200), via, real, ...extra });
+  if (real) await c.penalize(w, `decoy:${d.cat}`, w >= 10 ? 'high' : 'medium');
+  const r = decoyResponse(d);
+  return new Response(r.body, { status: r.status, headers: { 'content-type': r.ct, 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', ...SEC } });
+}
+
 function dbFor(uidv) {
   const pre = [...PRE, ["select set_config('app.uid', $1, true)", [uidv || '']]], n = pre.length;
   return {
@@ -82,22 +105,27 @@ const DB_ERR = {
 };
 
 async function handle(req) {
+  const t0 = performance.now();
   const url = new URL(req.url);
   const origin = req.headers.get('origin');
   const allowed = origin && (ORIGINS.has(origin) || (E.ALLOW_LOCALHOST === '1' && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)));
   const cors = allowed ? {
     'access-control-allow-origin': origin, vary: 'Origin', 'access-control-allow-headers': 'authorization, content-type',
-    'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS', 'access-control-max-age': '600',
+    'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS', 'access-control-max-age': '7200',
   } : {};
   const c = {
     req, url, method: req.method, path: url.pathname.replace(/\/+$/, '') || '/',
     ip: (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || '0.0.0.0', // المنصة تستبدل هذا الرأس بعنوان العميل الحقيقي
-    ua: (req.headers.get('user-agent') || '').slice(0, 300), uid: null, profile: null, cache: null,
+    ua: (req.headers.get('user-agent') || '').slice(0, 300), uid: null, profile: null, cache: null, dbms: 0, routeKey: null, routeStats,
     blocked, getSetting, settingsCache, seal: (t) => seal(ownerQ, t), open: (t) => open(ownerQ, t),
   };
-  const out = (status, data, headers = {}) => new Response(data == null ? null : JSON.stringify(data), {
-    status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...SEC, ...cors, ...headers },
-  });
+  const out = (status, data, headers = {}) => {
+    const ms = performance.now() - t0;
+    if (c.routeKey) STATS[statN++ % 2000] = [c.routeKey, ms];
+    return new Response(data == null ? null : JSON.stringify(data), {
+      status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'server-timing': `app;dur=${ms.toFixed(1)}, db;dur=${c.dbms.toFixed(1)}`, ...(allowed ? { 'timing-allow-origin': origin } : {}), ...SEC, ...cors, ...headers },
+    });
+  };
   if (req.method === 'OPTIONS') return out(allowed ? 204 : 403, null);
   if (!sql) return out(503, { error: 'not_configured' });
   if (origin && !allowed) return out(403, { error: 'origin_not_allowed' });
@@ -117,10 +145,13 @@ async function handle(req) {
   };
   c.unblock = (ip) => { blocked.delete(ip); clearStrikes(ip); };
 
-  // مصيدة مسارات الفحص الممررة من Netlify (/wp-admin، /.env ...): تسجيل فقط، لأن العنوان الظاهر هو عنوان Netlify
+  // 🕸️ فخاخ الموقع الممررة من Netlify (/trap/...): نثق بعنوان العميل فقط مع توقيع Netlify صحيح، وإلا نسجّل دون حظر
   if (c.path === '/trap' || c.path.startsWith('/trap/')) {
-    await c.secLog('path_scan_site', 'medium', { path: (c.path.slice(5) || url.searchParams.get('p') || '').slice(0, 300), via: req.headers.get('x-nf-request-id') ? 'netlify' : 'direct' });
-    return out(404, { error: 'not_found' });
+    const sp = c.path.slice(5) || '/', cip = (req.headers.get('x-nf-client-connection-ip') || '').trim();
+    const signed = verifyEdge(req.headers.get('x-nf-sign'), await edgeKey());
+    const real = signed && /^[0-9a-f.:]{3,45}$/i.test(cip);
+    if (real) c.ip = cip;
+    return decoy(c, matchDecoy(sp) || { path: sp, cat: 'trap', kind: 'exploit', id: 'P' }, signed ? 'site-signed' : 'site', real, { nf: Boolean(cip) });
   }
   await refreshBlocks();
   const auth = req.headers.get('authorization') || '';
@@ -149,15 +180,25 @@ async function handle(req) {
     return out(400, { error: 'bad_request' });
   }
   if (q && inspect(q)) await c.secLog('suspicious_search', 'medium', { q: q.slice(0, 120) });
+  // كناري: عنوان اصطناعي لا يظهر إلا داخل ردود الفخاخ ⇒ المرسل قرأ فخاً ويستخدمه الآن
+  const canary = canaryIn(url.pathname + url.search + ' ' + (req.headers.get('referer') || ''));
+  if (canary) {
+    await c.secLog('decoy_canary', 'critical', { canary });
+    await c.penalize(10, 'decoy_canary', 'critical');
+    return out(403, { error: 'forbidden' });
+  }
 
   // 4) مطابقة المسار
   let route, m;
   for (const r of routes) { if (r.method === req.method && (m = r.re.exec(c.path))) { route = r; break; } }
   if (!route) {
+    const d = matchDecoy(c.path);
+    if (d) return decoy(c, d, 'api', true);
     if (isProbe(c.path)) { await c.secLog('path_scan', 'medium', {}); await c.penalize(2, 'path_scan', 'medium'); }
     return out(404, { error: 'not_found' });
   }
   c.params = Object.fromEntries(route.keys.map((k, i) => [k, decodeSafe(m[i + 1])]));
+  c.routeKey = `${route.method} ${route.path}`;
 
   // 5) تحديد المعدل
   // تحديد المعدل يُبطئ فقط (429) ولا يحظر: كثير من مستخدمي شبكات الهاتف في العراق يتشاركون نفس العنوان (CGNAT)
@@ -181,15 +222,15 @@ async function handle(req) {
     }
   }
   if (['user', 'admin', 'owner'].includes(route.auth) && !c.uid) return out(401, { error: 'auth_required' });
-  c.db = dbFor(c.uid);
+  c.db = timed(dbFor(c.uid), c);
   if (c.uid) {
     try { c.profile = await c.db.one('select * from ensure_profile()'); if (['admin', 'owner'].includes(c.profile?.role)) await adminDevice(c); } catch (e) {
-      if (route.auth === 'optional' && /registration_closed/.test(e.message)) { c.uid = null; c.db = dbFor(null); }
+      if (route.auth === 'optional' && /registration_closed/.test(e.message)) { c.uid = null; c.db = timed(dbFor(null), c); }
       else if (/registration_closed/.test(e.message)) return out(403, { error: 'registration_closed' });
       else throw e;
     }
     if (c.profile?.banned) {
-      if (route.auth === 'optional') { c.uid = null; c.profile = null; c.db = dbFor(null); }
+      if (route.auth === 'optional') { c.uid = null; c.profile = null; c.db = timed(dbFor(null), c); }
       else return out(403, { error: 'banned', reason: c.profile.ban_reason });
     }
   }
@@ -209,7 +250,8 @@ async function handle(req) {
     const text = await req.text();
     if (text.length > 65536) return out(413, { error: 'payload_too_large' });
     if (text) {
-      if (!/application\/json/i.test(req.headers.get('content-type') || '')) return out(415, { error: 'json_required' });
+      const ct = req.headers.get('content-type') || '';
+      if (!/application\/json/i.test(ct) && !(route.beacon && /^text\/plain/i.test(ct))) return out(415, { error: 'json_required' });
       try { c.body = JSON.parse(text); } catch { return out(400, { error: 'invalid_json' }); }
       if (route.auth !== 'admin' && route.auth !== 'owner') {
         const found = inspect(text);

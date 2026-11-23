@@ -61,6 +61,26 @@ export default function (add) {
     return { product: p, files, lessons, reviews, me: { ...me[0], signed_in: !!c.uid } };
   }, { rl: ['detail', 120] });
 
+  // قياسات الأداء الحقيقية من متصفحات الزوار (sendBeacon نصي، بلا بيانات شخصية)
+  const PAGES = [[/^\/$/, '/'], [/^\/p\//, '/p/*'], [/^\/learn\//, '/learn/*'], [/^\/(python|apk|courses|videos|files|free|paid|latest|top|search)$/, '/catalog'],
+    [/^\/account$/, '/account'], [/^\/(login|signup|forgot)$/, '/auth'], [/^\/page\//, '/page/*'], [/^\/admin/, '/admin'], [/^\/(contact|faq|claim)$/, '/info']];
+  add('POST', '/vitals', 'none', async (c) => {
+    const b = c.body && typeof c.body === 'object' ? c.body : {};
+    if (c.isBot) return { ok: true };
+    const n = (v, max) => { if (v == null || v === '') return null; const x = Number(v); return Number.isFinite(x) && x >= 0 ? Math.min(max, Math.round(x)) : null; };
+    const page = (PAGES.find(([re]) => re.test(String(b.page || '').slice(0, 200))) || [0, 'other'])[1];
+    const cls = Number.isFinite(Number(b.cls)) && Number(b.cls) >= 0 ? Math.min(10, Number(Number(b.cls).toFixed(4))) : null;
+    const q = n(b.q, 8);
+    const ops = [['insert into perf_samples(page, mobile, device, q, lcp, fcp, ttfb, inp, cls, api_ms, db_ms, heap_mb) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',
+      [page, b.mobile === true, ['low', 'mid', 'high'].includes(b.dev) ? b.dev : 'mid', q >= 1 ? q : null, n(b.lcp, 60000), n(b.fcp, 60000), n(b.ttfb, 60000), n(b.inp, 10000), cls, n(b.api, 60000), n(b.db, 60000), n(b.heap, 8192)]]];
+    for (const e of (Array.isArray(b.errors) ? b.errors : []).slice(0, 5)) {
+      const msg = String(e?.m || '').replace(/\s+/g, ' ').trim().slice(0, 200);
+      if (msg) ops.push(['insert into client_errors(page, msg, src, line) values ($1,$2,$3,$4)', [page, msg, String(e?.s || '').replace(/[^\w.-]/g, '').slice(0, 80), n(e?.l, 1e7) || 0]]);
+    }
+    await c.db.tx(ops);
+    return { ok: true };
+  }, { rl: ['vitals', 30], beacon: true });
+
   add('POST', '/track', 'none', async (c) => {
     const path = typeof c.body?.path === 'string' ? c.body.path.slice(0, 300) : '/';
     const d = decodeSafe(path);

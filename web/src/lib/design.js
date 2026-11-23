@@ -33,9 +33,36 @@ export const PRESETS = Object.entries(SECTIONS).flatMap(([sec, [, lays]]) => PAC
 const BY_ID = new Map(PRESETS.map((p) => [p.id, p]));
 export const preset = (id) => BY_ID.get(id) || null;
 
-export const FONTS_AR = { cairo: "'Cairo Variable', 'Cairo'", tajawal: "'Tajawal'", system: "system-ui, 'Segoe UI', Tahoma", naskh: "'Noto Naskh Arabic', 'Geeza Pro', 'Times New Roman', serif" };
-export const FONTS_EN = { same: '', system: "system-ui, -apple-system, 'Segoe UI', Roboto", mono: "ui-monospace, 'SF Mono', Menlo, monospace", serif: "Georgia, 'Times New Roman', serif" };
-export const DEFAULT_TOKENS = { font_ar: 'cairo', font_en: 'same', radius: 12, scale: 1, space: 1, glass: 1, stroke: 2, motion: 'normal', mode: 'dark' };
+// مكتبة الخطوط: ذاتية الاستضافة (CSP) — Cairo بكل الأوزان 200–1000 وTajawal بأوزان 200–900 تُحمَّل عند الحاجة فقط + خطوط الجهاز
+export const FONTS_AR = { cairo: ["'Cairo Variable', 'Cairo'", 'Cairo — عصري (افتراضي)'], tajawal: ["'Tajawal'", 'Tajawal — نظيف أنيق'], system: ["system-ui, 'Segoe UI', Tahoma", 'خط الجهاز — الأسرع'], naskh: ["'Noto Naskh Arabic', 'Geeza Pro', 'Times New Roman', serif", 'نسخ كلاسيكي (خط الجهاز)'] };
+export const FONTS_EN = { same: ['', 'نفس الخط العربي'], system: ["system-ui, -apple-system, 'Segoe UI', Roboto", 'System UI'], mono: ["ui-monospace, 'SF Mono', Menlo, Consolas, monospace", 'Monospace — تقني'], serif: ["Georgia, 'Times New Roman', serif", 'Serif — كلاسيكي'] };
+export const FONTS_HEAD = { same: ['', 'نفس خط النص'], cairo: ["'Cairo Variable', 'Cairo'", 'Cairo'], tajawal: ["'Tajawal'", 'Tajawal'], naskh: [FONTS_AR.naskh[0], 'نسخ كلاسيكي — فاخر'], serif: ["Georgia, 'Noto Naskh Arabic', 'Geeza Pro', serif", 'Serif فاخر'], mono: [FONTS_EN.mono[0], 'Mono — سايبر'], system: [FONTS_AR.system[0], 'خط الجهاز'] };
+export const DEFAULT_TOKENS = { font_ar: 'cairo', font_en: 'same', font_head: 'same', hw: 'auto', hs: 'normal', quality: 'auto', radius: 12, scale: 1, space: 1, glass: 1, stroke: 2, motion: 'normal', mode: 'dark' };
+// مستويات الجودة: السقف من لوحة التحكم، والجهاز الضعيف ينزل تلقائياً، والزائر يستطيع فرض «الوضع الخفيف»
+export const QUALITY = [['auto', 'تلقائي حسب الجهاز (موصى به)'], ['low', 'LOW — أخف ما يمكن'], ['medium', 'MEDIUM'], ['high', 'HIGH'], ['very_high', 'VERY HIGH'], ['premium', 'PREMIUM'], ['ultra', 'ULTRA'], ['ultra_max', 'ULTRA MAX'], ['ultra_maximum', 'ULTRA MAXIMUM — كل المؤثرات']];
+const QL = { low: 1, medium: 2, high: 3, very_high: 4, premium: 5, ultra: 6, ultra_max: 7, ultra_maximum: 8, auto: 8 };
+export const lite = () => { try { return localStorage.getItem('lite') === '1'; } catch { return false; } };
+export function deviceCap() {
+  const n = navigator, c = n.connection || {}, mem = n.deviceMemory, cores = n.hardwareConcurrency || 8;
+  if (c.saveData || /(^|-)2g$/.test(c.effectiveType || '') || matchMedia('(prefers-reduced-motion: reduce)').matches || (mem && mem <= 1)) return 1;
+  if ((mem && (mem <= 2 || cores <= 4)) || cores <= 2 || c.effectiveType === '3g') return 2;
+  if (mem && mem <= 4) return 4;
+  return mem >= 8 && cores >= 8 ? 8 : 6;
+}
+export const initQuality = () => { document.body.dataset.q = String(lite() ? 1 : deviceCap()); };
+let tj = null; // أوزان Tajawal الإضافية (موجودة محلياً، تُحمَّل عند اختيار الخط فقط)
+const loadTajawal = () => (tj ??= Promise.all([import('@fontsource/tajawal/200.css'), import('@fontsource/tajawal/300.css'), import('@fontsource/tajawal/500.css'), import('@fontsource/tajawal/800.css'), import('@fontsource/tajawal/900.css')]).catch(() => { tj = null; }));
+// تصاميم كاملة بنقرة: أسلوب موحّد للأقسام العشرة + خطوط وأوزان وحركة مناسبة
+export const BUNDLES = [
+  ['pro', 'PRO', 'saas', { font_ar: 'cairo', font_en: 'system', font_head: 'same', hw: '700', hs: 'normal', radius: 10, motion: 'normal' }],
+  ['max', 'MAX', 'bento', { font_ar: 'tajawal', font_en: 'same', font_head: 'same', hw: '800', hs: 'normal', radius: 18, motion: 'normal' }],
+  ['ultra', 'ULTRA', 'liquid', { font_ar: 'cairo', font_en: 'same', font_head: 'same', hw: '900', hs: 'gradient', radius: 22, motion: 'strong' }],
+  ['premium', 'PREMIUM', 'luxury', { font_ar: 'tajawal', font_en: 'serif', font_head: 'serif', hw: '700', hs: 'normal', radius: 4, motion: 'normal' }],
+  ['elite', 'ELITE', 'apple', { font_ar: 'tajawal', font_en: 'system', font_head: 'same', hw: '700', hs: 'normal', radius: 24, motion: 'normal' }],
+  ['future', 'FUTURE', 'future', { font_ar: 'cairo', font_en: 'same', font_head: 'same', hw: '800', hs: 'glow', radius: 16, motion: 'strong' }],
+  ['cyber', 'CYBER', 'cyber', { font_ar: 'cairo', font_en: 'mono', font_head: 'mono', hw: '900', hs: 'glow', radius: 0, motion: 'normal' }],
+  ['enterprise', 'ENTERPRISE', 'swiss', { font_ar: 'cairo', font_en: 'system', font_head: 'same', hw: '700', hs: 'normal', radius: 6, motion: 'normal' }],
+];
 
 let cur = {}, mo = null, mq = matchMedia('(max-width: 760px)'), dark = matchMedia('(prefers-color-scheme: dark)');
 const map = () => (cur.mobile_on && mq.matches ? { ...(cur.sections || {}), ...(cur.mobile || {}) } : cur.sections || {});
@@ -56,10 +83,17 @@ export function applyDesign(d) {
   const t = { ...DEFAULT_TOKENS, ...(cur.tokens || {}) }, r = document.documentElement.style, b = document.body;
   r.setProperty('--fs-scale', t.scale); r.setProperty('--space', t.space); r.setProperty('--r-btn', `${t.radius}px`);
   r.setProperty('--ic-stroke', t.stroke); r.setProperty('--surface-a', t.glass);
-  if (cur.tokens && (t.font_ar !== 'cairo' || t.font_en !== 'same')) { r.setProperty('--ds-font', [FONTS_EN[t.font_en], FONTS_AR[t.font_ar] || FONTS_AR.cairo, 'system-ui, sans-serif'].filter(Boolean).join(', ')); b.dataset.dsfont = '1'; }
-  else { r.removeProperty('--ds-font'); delete b.dataset.dsfont; }
+  const body = [(FONTS_EN[t.font_en] || FONTS_EN.same)[0], (FONTS_AR[t.font_ar] || FONTS_AR.cairo)[0], 'system-ui, sans-serif'].filter(Boolean).join(', ');
+  if (cur.tokens && (t.font_ar !== 'cairo' || t.font_en !== 'same')) { r.setProperty('--ds-font', body); b.dataset.dsfont = '1'; } else { r.removeProperty('--ds-font'); delete b.dataset.dsfont; }
+  const head = (FONTS_HEAD[t.font_head] || FONTS_HEAD.same)[0];
+  if (head) { r.setProperty('--ds-head-font', `${head}, ${body}`); b.dataset.dshead = '1'; } else { r.removeProperty('--ds-head-font'); delete b.dataset.dshead; }
+  if (t.hw && t.hw !== 'auto') { r.setProperty('--hw', t.hw); b.dataset.hw = '1'; } else { r.removeProperty('--hw'); delete b.dataset.hw; }
+  if (t.hs && t.hs !== 'normal') b.dataset.hs = t.hs; else delete b.dataset.hs;
+  if (t.font_ar === 'tajawal' || t.font_head === 'tajawal') loadTajawal();
   b.dataset.motion = t.motion;
   b.dataset.mode = t.mode === 'auto' ? (dark.matches ? 'dark' : 'light') : t.mode;
+  const q = String(lite() ? 1 : Math.min(QL[t.quality] || 8, deviceCap()));
+  if (b.dataset.q !== q) { b.dataset.q = q; dispatchEvent(new CustomEvent('ds:q', { detail: Number(q) })); }
   const btn = preset(map().buttons);
   if (btn) { b.dataset.bpack = btn.pack; b.dataset.bfx = btn.lay; } else { delete b.dataset.bpack; delete b.dataset.bfx; }
   stamp(document);

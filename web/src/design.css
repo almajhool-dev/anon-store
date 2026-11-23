@@ -208,3 +208,41 @@ body[data-motion="strong"] .card { transition: transform .45s cubic-bezier(.2, .
 .ds-cmp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; } .ds-cmp p { margin: 0; text-align: center; font-size: .8rem; }
 .ds-secs { contain: inline-size; } .ds-secs .btn { white-space: nowrap; } .ds-secs .btn small { opacity: .7; font-weight: 500; }
 @media (max-width: 1000px) { .ds-layout { grid-template-columns: minmax(0, 1fr); } .ds-side { position: static; } }
+
+/* ---------- مستويات الجودة (1 LOW … 8 ULTRA MAXIMUM): السقف من لوحة التحكم والجهاز الضعيف ينزل تلقائياً ---------- */
+body:is([data-q="1"], [data-q="2"]) *, body:is([data-q="1"], [data-q="2"]) *::before, body:is([data-q="1"], [data-q="2"]) *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+body[data-q="1"] *, body[data-q="1"] *::before, body[data-q="1"] *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; }
+body[data-q="2"] *, body[data-q="2"] *::before, body[data-q="2"] *::after { animation-iteration-count: 1 !important; transition-duration: .15s !important; }
+body:is([data-q="1"], [data-q="2"]) .spinner, body:is([data-q="1"], [data-q="2"]) .btn.loading::after { animation-duration: .8s !important; animation-iteration-count: infinite !important; }
+body:is([data-q="1"], [data-q="2"]) .reveal { opacity: 1 !important; transform: none !important; }
+body:is([data-q="1"], [data-q="2"]) #bgv { display: none !important; }
+body:is([data-q="1"], [data-q="2"]) .hero-logo { filter: none; }
+body[data-q="1"] :is(.card, .btn, .hdr, .ftr, .a-card) { box-shadow: none !important; }
+body:is([data-q="7"], [data-q="8"]) .card:hover { box-shadow: 0 26px 60px rgba(0, 0, 0, .35), 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent); }
+body[data-q="8"] .hero h1 .gradient-text { background-size: 200% 100%; animation: ds-slide 6s linear infinite; }
+body[data-q="8"] .pcard .pcover img { transition: transform .6s cubic-bezier(.2, .8, .2, 1); } body[data-q="8"] .pcard:hover .pcover img { transform: scale(1.06); }
+/* العناوين: الوزن (Thin→Black) والخط والشكل (مفرّغ/متدرّج/متوهّج/ثلاثي الأبعاد) */
+body[data-hw] :is(h1, h2, h3, .a-title) { font-weight: var(--hw) !important; }
+body[data-dshead] :is(h1, h2, h3, .a-title, .brand > span) { font-family: var(--ds-head-font) !important; }
+body[data-hs="outline"] :is(h1, h2) { color: transparent !important; -webkit-text-stroke: 1.3px var(--text); }
+body[data-hs="outline"] :is(h1, h2) .gradient-text { -webkit-text-stroke: 1.3px var(--primary); background: none; }
+body[data-hs="gradient"] :is(h1, h2) { background: var(--ds-grad, var(--grad)); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+body[data-hs="glow"] :is(h1, h2) { text-shadow: 0 0 22px color-mix(in srgb, var(--primary) 55%, transparent), 0 0 2px color-mix(in srgb, var(--primary) 80%, transparent); }
+body[data-hs="shadow3d"] :is(h1, h2) { text-shadow: 1px 1px 0 color-mix(in srgb, var(--primary) 70%, #000), 2px 2px 0 color-mix(in srgb, var(--primary) 55%, #000), 3px 3px 0 color-mix(in srgb, var(--primary) 40%, #000), 5px 8px 14px rgba(0, 0, 0, .35); }
+/* ثبات التصميم (CLS): الذيل لا يقفز عند تحميل المحتوى، وصندوق شعار الواجهة محجوز مسبقاً */
+#view { min-height: 100vh; min-height: 100svh; }
+.hero-logo { aspect-ratio: 1 / 1; display: grid; place-items: center; }
+/* القوائم الطويلة: المتصفح يرسم العناصر خارج الشاشة عند الحاجة فقط */
+.grid > .pcard:nth-child(n+9) { content-visibility: auto; contain-intrinsic-size: auto 360px; }
+.lessons > .lesson:nth-child(n+16) { content-visibility: auto; contain-intrinsic-size: auto 52px; }
+.lite-btn { background: none; border: 1px solid var(--line-2); color: var(--muted); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: .8rem; cursor: pointer; }
+.lite-btn[aria-pressed="true"] { color: var(--primary); border-color: var(--primary); }
+/* لوحة الأداء */
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.kpi { padding: 14px !important; display: grid; gap: 4px; border-inline-start: 4px solid var(--line-2) !important; }
+.kpi b { font-size: 1.45rem; } .kpi span, .kpi small { color: var(--muted); font-size: .78rem; }
+.kpi.good { border-inline-start-color: #22c55e !important; } .kpi.mid { border-inline-start-color: #f59e0b !important; } .kpi.bad { border-inline-start-color: #ef4444 !important; }
+.ptbl { width: 100%; border-collapse: collapse; font-size: .85rem; } .ptbl th, .ptbl td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: middle; } .ptbl th { color: var(--muted); font-weight: 600; }
+.pbar { height: 8px; border-radius: 4px; background: var(--grad); min-width: 2px; width: var(--w, 0%); }
+.good-t { color: #22c55e; } .mid-t { color: #f59e0b; } .bad-t { color: #ef4444; }
+.ds-bundle { font-weight: 800; letter-spacing: .04em; }

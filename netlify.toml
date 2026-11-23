@@ -4,3 +4,1891 @@
   publish = "dist/web"
 [build.environment]
   NODE_VERSION = "22"
+
+# ===== قواعد مولّدة تلقائياً بـ scripts/gen-netlify.mjs — لا تعدّلها يدوياً =====
+# 3000 مؤشر خداع · 268 قاعدة فخ
+[[redirects]]
+  from = "/api/auth/*"
+  to = "https://ep-square-breeze-bawdktqt.neonauth.c-8.eu-central-1.aws.neon.tech/neondb/auth/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/.DS_Store"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.DS_Store"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.dockercfg"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.dockercfg"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.dockerenv"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.dockerenv"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.backup"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.backup"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.bak"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.bak"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.dev"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.dev"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.development"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.development"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.example"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.example"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.local"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.local"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.old"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.old"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.prod"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.prod"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.production"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.production"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.save"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.save"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.env.staging"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.env.staging"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.gitlab-ci.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.gitlab-ci.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.htpasswd"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.htpasswd"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.netrc"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.netrc"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.npmrc"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.npmrc"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.pypirc"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.pypirc"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.travis.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.travis.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/1.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/1.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/CHANGELOG.txt"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/CHANGELOG.txt"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/Dockerfile"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/Dockerfile"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/Jenkinsfile"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/Jenkinsfile"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/Procfile"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/Procfile"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/Telerik.Web.UI.WebResource.axd"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/Telerik.Web.UI.WebResource.axd"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/VERSION"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/VERSION"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/Vagrantfile"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/Vagrantfile"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/admin.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/admin.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/adminer.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/adminer.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/alfa.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/alfa.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/ansible.cfg"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/ansible.cfg"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/appsettings.Development.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/appsettings.Development.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/appsettings.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/appsettings.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/appspec.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/appspec.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/bitbucket-pipelines.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/bitbucket-pipelines.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/buildspec.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/buildspec.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/bypass.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/bypass.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/c99.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/c99.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/clientaccesspolicy.xml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/clientaccesspolicy.xml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/cloudbuild.yaml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/cloudbuild.yaml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/cmd.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/cmd.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/composer.lock"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/composer.lock"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/config.inc.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/config.inc.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/config.ini"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/config.ini"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/config.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/config.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/config.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/config.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/config.yaml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/config.yaml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/config.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/config.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/configuration.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/configuration.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/cpanel"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/cpanel"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/credentials.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/credentials.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/credentials.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/credentials.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/crossdomain.xml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/crossdomain.xml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/database.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/database.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/docker-compose.yaml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/docker-compose.yaml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/docker-compose.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/docker-compose.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/elmah.axd"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/elmah.axd"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/env.js"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/env.js"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/eval.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/eval.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/firebase.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/firebase.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/google-services.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/google-services.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/health.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/health.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/i.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/i.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/id_dsa"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/id_dsa"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/id_rsa"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/id_rsa"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/id_rsa.pub"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/id_rsa.pub"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/iisstart.htm"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/iisstart.htm"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/index.action"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/index.action"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/info.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/info.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/install.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/install.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/installer.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/installer.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/inventory.ini"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/inventory.ini"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/keys.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/keys.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/license.txt"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/license.txt"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/local_settings.py"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/local_settings.py"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/login.action"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/login.action"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/login.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/login.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/metrics"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/metrics"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/nginx_status"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/nginx_status"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/parameters.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/parameters.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/php.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/php.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/phpinfo.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/phpinfo.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/phpunit.xml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/phpunit.xml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/r57.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/r57.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/readme.html"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/readme.html"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/secret.key"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/secret.key"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/secrets.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/secrets.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/server-info"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/server-info"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/server-status"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/server-status"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/server.xml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/server.xml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/serverless.yml"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/serverless.yml"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/service-account.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/service-account.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/settings.py"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/settings.py"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/setup.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/setup.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/shell.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/shell.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/status.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/status.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/terraform.tfstate"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/terraform.tfstate"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/terraform.tfvars"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/terraform.tfvars"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/test.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/test.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/trace.axd"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/trace.axd"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/up.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/up.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/update.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/update.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/upgrade.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/upgrade.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/upload.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/upload.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/uploader.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/uploader.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/upstreams.json"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/upstreams.json"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/version.txt"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/version.txt"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/web.config"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/web.config"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/whm"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/whm"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wp-config.old"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp-config.old"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wp-config.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp-config.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wp-config.php.bak"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp-config.php.bak"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wp-login.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp-login.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wso.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wso.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/x.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/x.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/xmlrpc.php"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/xmlrpc.php"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/yarn.lock"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/yarn.lock"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.aws/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.aws/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.bzr/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.bzr/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.circleci/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.circleci/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.docker/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.docker/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.git/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.git/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.github/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.github/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.hg/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.hg/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.kube/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.kube/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.ssh/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.ssh/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.svn/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.svn/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/.terraform/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/.terraform/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/169.254.169.254/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/169.254.169.254/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/HNAP1/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/HNAP1/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/META-INF/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/META-INF/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/ReportServer/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/ReportServer/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/WEB-INF/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/WEB-INF/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/_async/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/_async/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/_ignition/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/_ignition/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/_profiler/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/_profiler/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/actuator/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/actuator/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/admincp/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/admincp/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/adminer/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/adminer/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/administrator/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/administrator/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/api/admin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/api/admin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/api/debug/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/api/debug/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/api/internal/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/api/internal/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/api/jsonws/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/api/jsonws/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/api/private/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/api/private/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/api/v2/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/api/v2/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/app/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/app/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/archive/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/archive/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/backend/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/backend/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/backup/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/backup/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/backup-site/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/backup-site/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/backups/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/backups/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/bak/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/bak/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/beta/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/beta/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/blog/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/blog/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/boaform/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/boaform/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/cache/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/cache/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/cgi-bin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/cgi-bin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/ckfinder/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/ckfinder/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/computeMetadata/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/computeMetadata/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/config/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/config/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/console/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/console/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/controlpanel/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/controlpanel/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/dana-na/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/dana-na/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/data/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/data/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/database/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/database/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/db/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/db/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/debug/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/debug/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/demo/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/demo/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/deploy/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/deploy/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/dev/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/dev/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/develop/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/develop/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/drupal/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/drupal/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/dump/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/dump/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/dumps/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/dumps/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/ecp/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/ecp/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/elfinder/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/elfinder/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/exports/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/exports/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/filemanager/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/filemanager/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/ghost/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/ghost/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/global-protect/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/global-protect/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/grafana/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/grafana/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/helm/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/helm/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/horizon/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/horizon/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/host-manager/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/host-manager/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/hudson/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/hudson/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/infra/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/infra/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/internal/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/internal/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/intranet/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/intranet/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/invoker/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/invoker/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/jenkins/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/jenkins/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/jmx-console/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/jmx-console/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/joomla/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/joomla/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/k8s/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/k8s/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/kcfinder/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/kcfinder/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/kibana/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/kibana/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/laravel/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/laravel/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/legacy/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/legacy/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/log/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/log/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/logs/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/logs/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/magento/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/magento/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/manager/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/manager/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/metadata/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/metadata/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/moderator/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/moderator/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/myadmin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/myadmin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/mysql/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/mysql/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/nagios/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/nagios/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/new/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/new/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/new-site/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/new-site/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/old/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/old/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/old-site/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/old-site/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/openstack/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/openstack/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/ops/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/ops/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/owa/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/owa/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/panel/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/panel/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/pgadmin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/pgadmin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/phpmyadmin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/phpmyadmin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/plesk/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/plesk/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/pma/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/pma/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/portainer/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/portainer/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/preprod/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/preprod/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/preview/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/preview/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/private/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/private/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/prometheus/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/prometheus/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/public/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/public/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/qa/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/qa/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/rabbitmq/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/rabbitmq/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/remote/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/remote/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/rest/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/rest/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/sandbox/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/sandbox/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/scripts/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/scripts/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/site/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/site/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/siteadmin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/siteadmin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/solr/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/solr/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/sql/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/sql/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/sqladmin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/sqladmin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/src/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/src/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/srv/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/srv/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/stage/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/stage/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/staging/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/staging/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/storage/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/storage/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/strapi/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/strapi/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/telescope/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/telescope/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/temp/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/temp/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/test/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/test/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/testing/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/testing/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/tmp/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/tmp/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/typo3/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/typo3/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/uat/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/uat/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/umbraco/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/umbraco/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/uploads/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/uploads/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/user/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/user/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/v1-old/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/v1-old/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/v2/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/v2/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/vendor/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/vendor/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/vpn/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/vpn/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/web-console/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/web-console/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/webadmin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/webadmin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/webmail/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/webmail/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wls-wsat/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wls-wsat/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wordpress/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wordpress/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wp/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wp-admin/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp-admin/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/wp-json/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/wp-json/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/www/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/www/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/zabbix/*"
+  to = "https://br-autumn-cake-bai4zvy6-api.compute.c-8.eu-central-1.aws.neon.tech/trap/zabbix/:splat"
+  status = 200
+  force = true
+  signed = "API_SIGNATURE_TOKEN"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

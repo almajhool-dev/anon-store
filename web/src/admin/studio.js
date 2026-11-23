@@ -3,7 +3,7 @@ import { html, mount, toast, busy, $, raw, confirmBox } from '../lib/dom.js';
 import { api } from '../lib/core.js';
 import { icon, art, LOGO } from '../lib/art.js';
 import { card } from '../lib/ui.js';
-import { PRESETS, PACKS, SECTIONS, preset, FONTS_AR, FONTS_EN, DEFAULT_TOKENS, applyDesign } from '../lib/design.js';
+import { PRESETS, PACKS, SECTIONS, preset, FONTS_AR, FONTS_EN, FONTS_HEAD, QUALITY, BUNDLES, DEFAULT_TOKENS, applyDesign } from '../lib/design.js';
 
 const A = (p) => raw(`data-sec="${p.sec}" data-ds-fixed data-lay="${p.lay}" data-pack="${p.pack}"`);
 const fake = (i) => ({ slug: 'demo', kind: ['python', 'apk', 'course'][i], title: ['أداة فحص الشبكات', 'تطبيق الحماية', 'دورة بايثون الاحترافية'][i], summary: 'وصف مختصر يظهر هنا', price: i ? 9.99 : 0, currency: 'USD', downloads: 1200 + i * 340, discount_percent: i === 1 ? 20 : 0, featured: i === 2 });
@@ -58,11 +58,13 @@ export default async function (main) {
 
   function draw() {
     const t = draft.tokens;
+    const sel = (k, label, opts) => html`<label class="field"><span>${label}</span><select class="select" data-tok="${k}">${opts.map(([v, l]) => html`<option value="${v}" ${String(t[k]) === v ? 'selected' : ''}>${l}</option>`)}</select></label>`;
     mount(main, html`<h2>${icon('star')} Ultimate Design Studio</h2>
       <p class="muted small">${PRESETS.length} واجهة جاهزة: ${Object.keys(SECTIONS).length} أقسام × ${PACKS.length} أسلوباً، لكل واجهة تخطيط وأسلوب وحركات مختلفة. اختياراتك تُحفظ كمسودة ولا يراها الزوار حتى تضغط «نشر».</p>
       <div class="card pad row wrap gap between"><b id="ds-state">${same() ? 'لا تغييرات غير منشورة' : '● مسودة محفوظة — لم تُنشر بعد'}</b>
         <div class="row wrap gap"><button class="btn primary" data-act="publish">${icon('check')} نشر للجميع</button><button class="btn ghost" data-act="discard">تجاهل المسودة</button>
         <button class="btn ghost" data-act="export">${icon('download')} نسخة احتياطية</button><label class="btn ghost">${icon('upload')} استيراد<input type="file" accept="application/json" id="ds-import" hidden></label></div></div>
+      <div class="card pad mt"><b>${icon('star')} تصميم كامل بنقرة واحدة</b> <span class="muted small">أسلوب موحّد للأقسام العشرة مع الخطوط والأوزان المناسبة — يذهب للمسودة أولاً</span><div class="row wrap gap mt">${BUNDLES.map(([k, l]) => html`<button class="btn sm ds-bundle" data-bundle="${k}">${l}</button>`)}</div></div>
       <div class="tabs ds-secs mt">${Object.entries(SECTIONS).map(([k, [l]]) => html`<button class="btn sm ${k === sec ? 'primary' : ''}" data-sec-tab="${k}">${l}<small>${chosen(k) ? ' · ' + (preset(chosen(k))?.packLabel || '') : ' · الحالي'}</small></button>`)}</div>
       <div class="row wrap gap">
         <input class="input" id="ds-q" placeholder="ابحث باسم الواجهة أو الأسلوب" value="${q}">
@@ -78,8 +80,12 @@ export default async function (main) {
           <p class="muted small">المعاينة تعرض المسودة فقط — الموقع لا يتغير للزوار قبل النشر.</p></div></div>
       <details class="card pad mt" open><summary>${icon('sliders')} تخصيص عام: الخطوط والأزرار والأحجام والمسافات والشفافية والأيقونات والحركة والوضع</summary>
         <div class="fgrid mt">
-          <label class="field"><span>الخط العربي</span><select class="select" data-tok="font_ar">${Object.keys(FONTS_AR).map((k) => html`<option value="${k}" ${t.font_ar === k ? 'selected' : ''}>${{ cairo: 'Cairo', tajawal: 'Tajawal', system: 'خط النظام', naskh: 'نسخ كلاسيكي' }[k]}</option>`)}</select></label>
-          <label class="field"><span>الخط الإنجليزي</span><select class="select" data-tok="font_en">${Object.keys(FONTS_EN).map((k) => html`<option value="${k}" ${t.font_en === k ? 'selected' : ''}>${{ same: 'نفس العربي', system: 'System UI', mono: 'Monospace', serif: 'Serif' }[k]}</option>`)}</select></label>
+          ${sel('font_ar', 'خط النص العربي', Object.entries(FONTS_AR).map(([k, [, l]]) => [k, l]))}
+          ${sel('font_en', 'خط النص الإنجليزي', Object.entries(FONTS_EN).map(([k, [, l]]) => [k, l]))}
+          ${sel('font_head', 'خط العناوين', Object.entries(FONTS_HEAD).map(([k, [, l]]) => [k, l]))}
+          ${sel('hw', 'سُمك العناوين', [['auto', 'حسب الأسلوب'], ['200', 'Thin 200'], ['300', 'Light 300'], ['400', 'Regular 400'], ['600', 'SemiBold 600'], ['700', 'Bold 700'], ['800', 'ExtraBold 800'], ['900', 'Black 900']])}
+          ${sel('hs', 'شكل العناوين', [['normal', 'عادي'], ['outline', 'مفرّغ (Outlined)'], ['gradient', 'متدرّج'], ['glow', 'متوهّج'], ['shadow3d', 'ظل ثلاثي الأبعاد']])}
+          ${sel('quality', 'جودة المؤثرات (السقف)', QUALITY)}
           <label class="field"><span>استدارة الأزرار: <b>${t.radius}px</b></span><input type="range" min="0" max="32" step="1" value="${t.radius}" data-tok="radius"></label>
           <label class="field"><span>حجم النصوص: <b>${Math.round(t.scale * 100)}%</b></span><input type="range" min="0.85" max="1.25" step="0.05" value="${t.scale}" data-tok="scale"></label>
           <label class="field"><span>المسافات: <b>${Math.round(t.space * 100)}%</b></span><input type="range" min="0.75" max="1.5" step="0.05" value="${t.space}" data-tok="space"></label>
@@ -87,7 +93,7 @@ export default async function (main) {
           <label class="field"><span>سُمك الأيقونات</span><select class="select" data-tok="stroke">${[[1.5, 'رفيع'], [2, 'عادي'], [2.5, 'عريض']].map(([v, l]) => html`<option value="${v}" ${Number(t.stroke) === v ? 'selected' : ''}>${l}</option>`)}</select></label>
           <label class="field"><span>الحركة</span><select class="select" data-tok="motion">${[['normal', 'عادية'], ['strong', 'قوية'], ['off', 'إيقاف الحركات']].map(([v, l]) => html`<option value="${v}" ${t.motion === v ? 'selected' : ''}>${l}</option>`)}</select></label>
           <label class="field"><span>الوضع</span><select class="select" data-tok="mode">${[['dark', 'ليلي'], ['light', 'نهاري'], ['auto', 'حسب جهاز الزائر']].map(([v, l]) => html`<option value="${v}" ${t.mode === v ? 'selected' : ''}>${l}</option>`)}</select></label>
-        </div><p class="muted small">الألوان والخلفيات وحركات الانتقال (100 حركة) في تبويب «المظهر والإعدادات».</p></details>
+        </div><p class="muted small">الجودة سقف أعلى: الأجهزة الضعيفة تنزل تلقائياً لتبقى سريعة، والزائر يستطيع تفعيل «الوضع الخفيف» من ذيل الموقع. الألوان والخلفيات وحركات الانتقال (100 حركة) في تبويب «المظهر والإعدادات».</p></details>
       <details class="card pad mt"><summary>${icon('clock')} سجل النشر والاستعادة (${S.history.length})</summary>
         ${S.history.length ? S.history.map((h, i) => html`<div class="row between wrap mt"><span class="small">${new Date(h.at).toLocaleString('ar-IQ')} — <span class="ltr">${h.by || ''}</span> · ${Object.keys(h.design?.sections || {}).length} أقسام مخصّصة</span><button class="btn ghost sm" data-restore="${i}">استعادة ونشر</button></div>`) : html`<p class="muted small mt">لا يوجد نشر سابق بعد.</p>`}</details>`);
     requestAnimationFrame(fit);
@@ -119,8 +125,14 @@ export default async function (main) {
 
   // ---------- الأحداث ----------
   main.addEventListener('click', async (e) => {
-    const b = e.target.closest('[data-pick],[data-fav],[data-cmp],[data-sec-tab],[data-dev],[data-act],[data-restore]');
+    const b = e.target.closest('[data-pick],[data-fav],[data-cmp],[data-sec-tab],[data-dev],[data-act],[data-restore],[data-bundle]');
     if (!b) return;
+    if (b.dataset.bundle) {
+      const [, label, pack, tok] = BUNDLES.find((z) => z[0] === b.dataset.bundle);
+      for (const k of Object.keys(SECTIONS)) { const p = PRESETS.find((z) => z.sec === k && z.pack === pack); if (p) draft.sections[k] = p.id; }
+      draft.tokens = { ...draft.tokens, ...tok }; cmpId = null; save();
+      toast(`تم تطبيق تصميم ${label} على كل الأقسام — في المسودة`, 'ok'); return draw();
+    }
     if (b.dataset.fav) { e.stopPropagation(); favs.has(b.dataset.fav) ? favs.delete(b.dataset.fav) : favs.add(b.dataset.fav); save(); return favOnly ? draw() : refresh(); }
     if (b.dataset.cmp) { e.stopPropagation(); cmpId = cmpId === b.dataset.cmp ? null : b.dataset.cmp; return draw(); }
     if (b.dataset.pick) { selMap()[sec] = b.dataset.pick; save(); toast(`تم اختيار «${preset(b.dataset.pick).name}» — في المسودة`, 'ok'); if (cmpId) { cmpId = null; return draw(); } return refresh(); }

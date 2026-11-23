@@ -40,7 +40,7 @@ const dl = await call(`/download/${free.d.id}`, { method: 'POST', body: {} });
 ok('anonymous download signed URL', dl.s === 200 && (await (await fetch(dl.d.url)).text()) === 'hello prod!\n');
 ok('user cannot hit admin', (await call('/admin/stats', { token: U })).s === 403);
 ok('SQLi blocked', (await call("/products?kind=x' OR '1'='1")).s === 400);
-ok('trap logs scan', (await call('/trap?p=/wp-admin/setup.php')).s === 404);
+ok('site trap → synthetic decoy (logged, unsigned = no block)', (await call('/trap/server-status')).s === 200);
 const sec = await call('/admin/security', { token: A });
 ok('security events recorded', sec.d?.events?.some((e) => e.kind === 'sqli') && sec.d.events.some((e) => e.kind === 'path_scan_site'));
 ok('cleanup product', (await call(`/admin/products/${free.d.id}`, { method: 'DELETE', token: A })).s === 200);

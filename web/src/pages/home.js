@@ -24,7 +24,7 @@ export default async function (view, _m, { state, setTitle }) {
       <p class="lead">${h.subtitle || s.tagline}</p>
       <div class="row wrap gap mt">${h.cta1_text ? btnLink(h.cta1_link || '/latest', 'btn primary lg', html`${icon('grid')} ${h.cta1_text}`) : ''}${h.cta2_text ? btnLink(h.cta2_link || '/free', 'btn lg', html`${icon('gift')} ${h.cta2_text}`) : ''}</div>
     </div>
-    <div class="reveal"><div class="hero-logo">${heroImg ? html`<img class="ia-${h.image_anim}" data-fx="${h.image_anim}" src="${safeUrl(heroImg)}" alt="">` : html`<span class="hero-svg ia-${h.image_anim}" data-fx="${h.image_anim}">${raw(LOGO)}</span>`}</div>
+    <div class="reveal"><div class="hero-logo">${heroImg ? html`<img class="ia-${h.image_anim}" data-fx="${h.image_anim}" src="${safeUrl(heroImg)}" alt="" fetchpriority="high" decoding="async">` : html`<span class="hero-svg ia-${h.image_anim}" data-fx="${h.image_anim}">${raw(LOGO)}</span>`}</div>
       ${h.show_terminal && h.terminal?.length ? html`<div class="card terminal glow"><header><i></i><i></i><i></i></header><pre id="term"></pre></div>` : ''}</div>
   </section>
   ${c.show.sections ? html`<section class="container section"><div class="section-head"><div><h2>الأقسام</h2><p class="muted">كل ما تحتاجه في مكان واحد</p></div></div>

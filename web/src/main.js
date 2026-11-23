@@ -12,7 +12,8 @@ import { getContent, SECTIONS } from './lib/content.js';
 import { showIntro } from './lib/intro.js';
 import { auto3d } from './lib/spin3d.js';
 import { play } from './lib/transitions.js';
-import { startDesign } from './lib/design.js';
+import { startDesign, initQuality, applyDesign, currentDesign, lite } from './lib/design.js';
+import { startVitals } from './lib/vitals.js';
 const DSP = window.parent !== window && new URLSearchParams(location.search).has('dsp'); // داخل معاينة استوديو التصميم
 
 export const state = { settings: null, me: null, unread: 0 };
@@ -33,7 +34,7 @@ const ROUTES = [
 // فيديو خلفية متحرك (يُتجاوز عند تفعيل "تقليل الحركة" أو "توفير البيانات" في الهاتف)
 function bgVideo(src) {
   let v = document.getElementById('bgv');
-  if (!src || matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) { v?.remove(); return; }
+  if (!src || matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData || Number(document.body.dataset.q || 4) <= 2) { v?.remove(); return; }
   if (!v) {
     v = document.createElement('video');
     v.id = 'bgv'; v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
@@ -44,6 +45,8 @@ function bgVideo(src) {
   if (v.getAttribute('src') !== u) v.setAttribute('src', u);
   v.play?.().catch(() => {});
 }
+
+addEventListener('ds:q', () => { const s = state.settings?.site; if (s) bgVideo(s.background === 'video' ? s.background_video_url : null); });
 
 export function applyTheme(site) {
   const s = document.documentElement.style, c = site.colors || {};
@@ -128,7 +131,7 @@ function renderLayout() {
       <div><h4>المتجر</h4><a href="/latest">أحدث المنتجات</a><a href="/top">الأكثر تحميلاً</a><a href="/free">المنتجات المجانية</a><a href="/paid">المنتجات المدفوعة</a></div>
       <div><h4>الدعم</h4><a href="/contact">التواصل والدعم</a><a href="/faq">الأسئلة الشائعة</a><a href="/account">حسابي</a>${fpages.map((p) => html`<a href="${p.url || '/page/' + p.slug}">${p.title}</a>`)}</div>
     </div>
-    <div class="copy"><span>© ${new Date().getFullYear()} ${c.footer.text}</span><span class="ltr">Anonymous Programmer Store</span></div>
+    <div class="copy"><span>© ${new Date().getFullYear()} ${c.footer.text}</span><button type="button" class="lite-btn" data-lite aria-pressed="${lite() ? 'true' : 'false'}">⚡ <span>${lite() ? 'الوضع الخفيف مفعّل' : 'الوضع الخفيف'}</span></button><span class="ltr">Anonymous Programmer Store</span></div>
   </div></footer>`);
   renderHeader();
   autoReveal($('#view'));
@@ -159,6 +162,7 @@ export async function go(path, replace = false) {
   history[replace ? 'replaceState' : 'pushState'](null, '', path);
   await render(true);
 }
+let firstPaint = true;
 async function render(scroll) {
   const id = ++navId, view = $('#view'), path = location.pathname;
   $('#drawer')?.classList.remove('open');
@@ -175,7 +179,8 @@ async function render(scroll) {
       view.innerHTML = '';
       if (scroll) scrollTo({ top: 0 });
       cleanup = await mod.default(view, m, { state, go, refreshMe, setTitle, isAdmin, applyTheme, renderHeader });
-      play(view, state.settings.site.anim?.page || 'fade'); // حركة الانتقال بين الصفحات (مكتبة 100 حركة)
+      if (!firstPaint) play(view, state.settings.site.anim?.page || 'fade'); // حركة الانتقال بين الصفحات (ليس عند أول ظهور: المحتوى فوراً)
+      firstPaint = false;
     } catch (e) {
       console.error(e);
       if (id === navId) mount(view, html`<div class="container page"><div class="empty card">${icon('shield')}<p>${e.message || 'تعذر تحميل الصفحة'}</p><a class="btn ghost sm" href="/">الرئيسية</a></div></div>`);
@@ -203,19 +208,64 @@ document.addEventListener('click', (e) => {
   else if (u.hash) document.getElementById(u.hash.slice(1))?.scrollIntoView({ behavior: 'smooth' });
 });
 addEventListener('popstate', () => render(false));
+// تحميل مسبق للصفحة عند مرور الإصبع/المؤشر على الرابط (انتقال شبه فوري)
+const pre = new Set();
+function prefetch(href) {
+  try {
+    const u = new URL(href, location.href);
+    if (u.origin !== location.origin || pre.has(u.pathname)) return;
+    pre.add(u.pathname);
+    ROUTES.find(([re]) => re.test(u.pathname))?.[1]().catch(() => pre.delete(u.pathname));
+  } catch { /* تجاهل */ }
+}
+for (const t of ['pointerover', 'touchstart', 'focusin']) document.addEventListener(t, (e) => { const a = e.target.closest?.('a[href^="/"]'); if (a) prefetch(a.href); }, { passive: true });
+// الوضع الخفيف: يفرضه الزائر لنفسه (يُحفظ على جهازه فقط)
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-lite]');
+  if (!b) return;
+  try { if (lite()) localStorage.removeItem('lite'); else localStorage.setItem('lite', '1'); } catch { /* تجاهل */ }
+  applyDesign(currentDesign());
+  b.setAttribute('aria-pressed', String(lite()));
+  b.querySelector('span').textContent = lite() ? 'الوضع الخفيف مفعّل' : 'الوضع الخفيف';
+  toast(lite() ? 'تم تفعيل الوضع الخفيف: مؤثرات أقل وسرعة أعلى' : 'عادت المؤثرات حسب قدرة جهازك', 'ok');
+});
+
+// إعدادات الموقع: إن تأخر الخادم نعرض آخر نسخة محفوظة فوراً (للزائر العائد) ثم نحدّثها بصمت
+const CK = 'settings_v1';
+const readCache = () => { try { const j = JSON.parse(localStorage.getItem(CK) || 'null'); return j && Date.now() - j.t < 6048e5 ? j.s : null; } catch { return null; } };
+const writeCache = (s) => { try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), s })); } catch { /* المساحة ممتلئة */ } };
+function useSettings(s) {
+  state.settings = { social: {}, faq: [], payments: {}, ...(s || {}) };
+  state.settings.site = { ...DEFAULT_SITE, ...(state.settings.site || {}) };
+}
 
 (async function boot() {
+  initQuality();
+  startVitals();
   startFx();
-  const [settings] = await Promise.all([api.get('/settings').catch(() => null), auth.init().catch(() => null)]);
-  state.settings = { social: {}, faq: [], payments: {}, ...(settings || {}) };
-  state.settings.site = { ...DEFAULT_SITE, ...(state.settings.site || {}) };
+  const cached = DSP ? null : readCache();
+  // الزائر غير المسجّل (الأغلبية) لا ينتظر فحص الجلسة: نعرض فوراً، ونحدّث الرأس إن تبيّن أنه مسجّل
+  const hinted = DSP || (() => { try { return localStorage.getItem('signed_in') === '1'; } catch { return true; } })();
+  const freshP = api.get('/settings').catch(() => null);
+  const authP = auth.init().catch(() => null).then((u) => { try { if (u) localStorage.setItem('signed_in', '1'); else localStorage.removeItem('signed_in'); } catch { /* تجاهل */ } return u; });
+  const first = cached ? await Promise.race([freshP, new Promise((r) => setTimeout(() => r(cached), 450))]) : await freshP;
+  if (hinted) await authP;
+  const settings = first || cached;
+  useSettings(settings);
   applyTheme(state.settings.site);
   startDesign(state.settings.design);
-  if (!DSP) showIntro(getContent(state).intro, state.settings.site);
+  if (!DSP && Number(document.body.dataset.q) > 2) showIntro(getContent(state).intro, state.settings.site);
   document.body.dataset.covers = getContent(state).covers_anim;
   auto3d();
   renderLayout();
-  await refreshMe();
+  if (hinted) await refreshMe();
   if (!settings) toast('تعذر الاتصال بالخادم حالياً — بعض الميزات قد لا تعمل', 'warn', 6000);
   render(false);
+  if (!hinted) authP.then(async (u) => { if (!u) return; await refreshMe(); renderHeader(); render(false); });
+  freshP.then((s) => {
+    if (!s) return;
+    if (!DSP) writeCache(s);
+    if (s !== settings && JSON.stringify(s) !== JSON.stringify(settings)) { useSettings(s); applyTheme(state.settings.site); applyDesign(state.settings.design); renderHeader(); render(false); }
+  });
+  if (Number(document.body.dataset.q) > 2 && !navigator.connection?.saveData) (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => ['/latest', '/p/x', '/login'].forEach(prefetch));
 })();

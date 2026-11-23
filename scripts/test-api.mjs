@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 // اختبار تكاملي حقيقي للواجهة الخلفية مع Neon Auth + قاعدة البيانات + التخزين
 // الاستخدام: node scripts/test-api.mjs   (API_URL اختياري؛ الافتراضي الخادم المحلي)
 // FULL_SECURITY=1 يفعّل اختبارات الحظر التلقائي (محلياً فقط لأنها تعتمد على x-test-ip)
@@ -206,7 +206,7 @@ ok('DB trigger blocks self-promotion to admin', denied);
 ok('SQLi in query blocked', (await api("/products?kind=python' OR '1'='1", { ip: '10.0.0.11' })).status === 400);
 ok('XSS in path blocked', (await api('/products/%3Cscript%3Ealert(1)%3C%2Fscript%3E', { ip: '10.0.0.12' })).status === 400);
 ok('traversal blocked', (await api('/products/..%2F..%2Fetc%2Fpasswd', { ip: '10.0.0.13' })).status === 400);
-ok('scanner path logged (404)', (await api('/wp-admin/setup.php', { ip: '10.0.0.14' })).status === 404);
+ok('scanner path on API domain → decoy login page (logged, synthetic)', (await api('/wp-admin/setup.php', { ip: '10.0.0.14' })).status === 200);
 ok('attack tool UA blocked', (await api('/health', { ip: '10.0.0.15', headers: { 'user-agent': 'sqlmap/1.8' } })).status === 403);
 ok('owner claim with bad token rejected', (await api('/admin/claim', { method: 'POST', token: user.token, ip: '10.0.0.16', body: { token: 'x'.repeat(32) } })).status === 403);
 if (LOCAL) {
@@ -313,6 +313,8 @@ ok('audit log records admin actions', (await api('/admin/audit', { token: admin.
   ok('content: 3D touch-rotate (coin) for hero, header logo, banners, covers', c3.data?.value?.hero?.image_anim === 'coin' && c3.data.value.hero.logo_anim === 'coin' && c3.data.value.banners[0].anim === 'coin' && c3.data.value.covers_anim === 'coin', JSON.stringify(c3.data).slice(0, 160));
   ok('content: unknown animation falls back safely', (await api('/admin/settings/content', { method: 'PUT', token: admin.token, body: { value: { ...content, covers_anim: '<script>' } } })).data?.value?.covers_anim === 'none');
   // --- استوديو التصميم ---
+  await api('/admin/design/draft', { method: 'PUT', token: admin.token, body: { design: {} } }); // بداية نظيفة (الفرع فقط)
+  await api('/admin/design/publish', { method: 'POST', token: admin.token, body: {} });
   ok('design: normal user blocked from studio', (await api('/admin/design', { token: user.token, ip: '198.51.100.23' })).status === 403);
   const dsd = await api('/admin/design/draft', { method: 'PUT', token: admin.token, body: { design: { sections: { hero: 'hero-center-glass', cards: 'cards-overlay-neon', bad: 'x', footer: '<script>' }, mobile_on: true, mobile: { hero: 'hero-bento-swiss' }, tokens: { radius: 99, scale: 3, mode: 'light', font_ar: 'evil' } }, favs: ['hero-center-glass', 'nope!'] } });
   ok('design: draft saved + sanitized', dsd.status === 200 && dsd.data.draft.sections.hero === 'hero-center-glass' && !dsd.data.draft.sections.footer && dsd.data.draft.tokens.radius === 32 && dsd.data.draft.tokens.scale === 1.25 && dsd.data.draft.tokens.font_ar === 'cairo' && dsd.data.favs.length === 1, JSON.stringify(dsd.data).slice(0, 200));
@@ -328,9 +330,42 @@ ok('audit log records admin actions', (await api('/admin/audit', { token: admin.
   ok('design: publish/restore logged with admin identity', au?.n >= 3, JSON.stringify(au));
   ok('design: private draft/history never in public settings', !/design_draft|design_history/.test(JSON.stringify((await api('/settings')).data)));
   if (LOCAL) {
-    ok('honeypot path form → 404', (await api('/trap/wp-admin/setup.php', { ip: '203.0.113.77' })).status === 404);
-    const [ev] = await owner.query(`select * from security_events order by created_at desc limit 1`);
-    ok('honeypot logs scanned path', JSON.stringify(ev || {}).includes('/wp-admin/setup.php'), JSON.stringify(ev).slice(0, 200));
+    // --- 🕸️ الفخاخ (3000 مؤشر) ---
+    const D = await import('../api/src/decoys.js');
+    ok('decoys: exactly 3000 isolated indicators, none collide with real routes', D.DECOY_COUNT === 3000 && D.decoyRoutes().prefixes.length > 0 && ['/', '/p/x', '/admin/studio', '/api/auth/get-session', '/latest', '/login'].every((p) => !D.matchDecoy(p)));
+    const tr = await fetch(API + '/trap/server-status', { headers: { origin: ORIGIN, 'x-test-ip': '203.0.113.77' } });
+    const tb = await tr.text();
+    ok('decoy (site, unsigned): synthetic banner, nothing real leaked', tr.status === 200 && /Server Status for (192\.0\.2|198\.51\.100|203\.0\.113)\./.test(tb) && !/neon|npg_|majhool|@/i.test(tb), tr.status + ' ' + tb.slice(0, 80));
+    const [ev] = await owner.query(`select detail from security_events where kind = 'decoy_hit' order by created_at desc limit 1`);
+    ok('decoy hit logged with category + indicator id (no block without verified IP)', ev?.detail?.cat === 'fingerprint' && /^D\d{4}$/.test(ev.detail.id) && ev.detail.real === false, JSON.stringify(ev));
+    const [{ k: EK }] = await owner.query(`select convert_from(value, 'UTF8') as k from ops.secrets where name = 'edge_sign_v1'`);
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+    const jws = (key) => { const h = b64({ alg: 'HS256', typ: 'JWT' }), p = b64({ iss: 'netlify', site_url: 'https://majhool-store.netlify.app', exp: Math.floor(Date.now() / 1000) + 60 }); return `${h}.${p}.${createHmac('sha256', key).update(`${h}.${p}`).digest('base64url')}`; };
+    const ipA = `203.0.113.${100 + (Date.now() % 50)}`, ipB = `198.51.100.${150 + (Date.now() % 50)}`;
+    await fetch(API + '/trap/.git/config', { headers: { origin: ORIGIN, 'x-test-ip': '127.0.0.1', 'x-nf-sign': jws('wrong-key'), 'x-nf-client-connection-ip': ipB } });
+    ok('forged Netlify signature: client-IP header ignored (no block)', (await api('/settings', { ip: ipB })).status === 200);
+    const sr = await fetch(API + '/trap/.git/config', { headers: { origin: ORIGIN, 'x-test-ip': '127.0.0.1', 'x-nf-sign': jws(EK), 'x-nf-client-connection-ip': ipA } });
+    ok('signed Netlify hit on exploit trap → real attacker IP auto-blocked', sr.status === 200 && (await sr.text()).includes('[remote "origin"]') && (await api('/settings', { ip: ipA })).status === 403);
+    const ipC = `192.0.2.${10 + (Date.now() % 80)}`;
+    const dr = await api('/api/v2/users/1005', { ip: ipC });
+    ok('direct API-domain decoy → simulated JSON with synthetic data only', dr.status === 200 && /@example\.invalid$/.test(dr.data?.email || '') && /^(192\.0\.2|198\.51\.100|203\.0\.113)\./.test(dr.data?.last_login_ip || ''), JSON.stringify(dr.data));
+    const ipD = `198.51.100.${60 + (Date.now() % 80)}`;
+    const cr = await api('/products?ref=198.51.100.9', { ip: ipD });
+    ok('canary: reusing a synthetic IP seen only in decoys → blocked', cr.status === 403 && (await api('/settings', { ip: ipD })).status === 403, cr.status);
+    // --- 📈 قياسات الأداء الحقيقية ---
+    const beacon = (body, ct = 'text/plain;charset=UTF-8') => fetch(API + '/vitals', { method: 'POST', headers: { origin: ORIGIN, 'content-type': ct, 'x-test-ip': '127.0.0.1' }, body: JSON.stringify(body) });
+    const vb = await beacon({ page: '/p/some-slug', lcp: 999999, fcp: 900, ttfb: 120, inp: 64, cls: 50, api: 180, db: 12, heap: 40, mobile: true, dev: 'mid', q: 6, errors: [{ m: 'x'.repeat(500), s: 'https://a.b/assets/main-abc.js?v=1', l: 7 }, ...Array(9).fill({ m: 'boom' })] });
+    const [vs] = await owner.query(`select page, lcp, cls, q from perf_samples order by id desc limit 1`);
+    const [ec] = await owner.query(`select count(*)::int as n, max(length(msg))::int as mx from client_errors where at > now() - interval '1 minute'`);
+    ok('vitals beacon (text/plain, no preflight) stored, clamped, page templated', vb.status === 200 && vs?.page === '/p/*' && vs.lcp === 60000 && vs.cls === 10 && vs.q === 6 && ec.n === 5 && ec.mx === 200, JSON.stringify([vb.status, vs, ec]));
+    ok('vitals rejects other content types', (await beacon({ page: '/' }, 'application/xml')).status === 415);
+    const pf = await api('/admin/perf', { token: admin.token });
+    ok('performance dashboard: real aggregates + live server checks + 3000 decoys', pf.status === 200 && pf.data.summary.n >= 1 && Number.isFinite(pf.data.server.db_ms) && pf.data.decoys.total === 3000 && Array.isArray(pf.data.server.routes), JSON.stringify(pf.data).slice(0, 200));
+    ok('performance dashboard is admin-only', (await api('/admin/perf', { token: user.token, ip: '198.51.100.23' })).status === 403);
+    const st = await fetch(API + '/settings', { headers: { origin: ORIGIN } });
+    ok('Server-Timing (app/db) + Timing-Allow-Origin on API responses', /app;dur=[\d.]+, db;dur=[\d.]+/.test(st.headers.get('server-timing') || '') && st.headers.get('timing-allow-origin') === ORIGIN, st.headers.get('server-timing'));
+    const pre = await fetch(API + '/me', { method: 'OPTIONS', headers: { origin: ORIGIN, 'access-control-request-method': 'GET', 'access-control-request-headers': 'authorization' } });
+    ok('CORS preflight cached 2h (fewer round-trips)', pre.headers.get('access-control-max-age') === '7200');
   }
 }
 

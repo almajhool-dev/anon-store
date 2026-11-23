@@ -1,4 +1,5 @@
 // مسارات لوحة المدير — كل مسار هنا محمي بالخادم (دور admin/owner) وبسياسات RLS في قاعدة البيانات
+import { CATS, DECOY_COUNT } from './decoys.js';
 import { randomUUID } from 'node:crypto';
 import { fail, str, int, num, uid, httpsUrl, storage, planParts, EXT, scanFile } from './lib.js';
 import { KINDS, COLS } from './routes.js';
@@ -16,6 +17,10 @@ const txt = (v, max, name = 'text') => str(v ?? '', max, { name });
 const ANIMS = ['none', 'coin', 'pulse', 'float', 'spin', 'bounce', 'glow', 'swing'];
 const akey = (x, d) => (typeof x === 'string' && /^[a-z0-9-]{2,32}$/.test(x) ? x : d); // اسم حركة من المكتبة
 // ---------- استوديو التصميم: مسودة خاصة ← نشر عام، سجل آخر 20 نشراً، مفضلة ----------
+// خطوط مكتبة التصميم (تُحمَّل في الواجهة عند اختيارها فقط) — يجب أن تطابق lib/design.js
+const FA = ['cairo', 'tajawal', 'kufi', 'plex', 'readex', 'almarai', 'messiri', 'amiri', 'changa', 'system', 'naskh'];
+const FE = ['same', 'inter', 'montserrat', 'grotesk', 'exo', 'raleway', 'playfair', 'system', 'mono', 'serif'];
+const FH = ['same', 'lalezar', 'ruqaa', 'reem', 'messiri', 'amiri', 'changa', 'kufi', 'readex', 'orbitron', 'monoton', 'playfair', 'exo', 'grotesk', 'montserrat', 'raleway', 'inter'];
 const DS_SEC = ['header', 'hero', 'cats', 'cards', 'product', 'learn', 'account', 'auth', 'footer', 'buttons'];
 const dsId = (v) => (typeof v === 'string' && v.length <= 40 && /^[a-z]+-[a-z]+-[a-z]+$/.test(v) ? v : null);
 function designInput(v) {
@@ -24,7 +29,9 @@ function designInput(v) {
   const t = v.tokens || {}, pick = (x, l, d) => (l.includes(x) ? x : d);
   const n = (x, a, b, d) => { const y = Number(x); return Number.isFinite(y) ? Math.min(b, Math.max(a, y)) : d; };
   return { v: 1, sections: secs(v.sections), mobile: secs(v.mobile), mobile_on: v.mobile_on === true,
-    tokens: { font_ar: pick(t.font_ar, ['cairo', 'tajawal', 'system', 'naskh'], 'cairo'), font_en: pick(t.font_en, ['same', 'system', 'mono', 'serif'], 'same'), radius: n(t.radius, 0, 32, 12), scale: n(t.scale, 0.85, 1.25, 1), space: n(t.space, 0.75, 1.5, 1), glass: n(t.glass, 0.3, 1, 1), stroke: n(t.stroke, 1.25, 2.75, 2), motion: pick(t.motion, ['off', 'normal', 'strong'], 'normal'), mode: pick(t.mode, ['dark', 'light', 'auto'], 'dark') } };
+    tokens: { font_ar: pick(t.font_ar, FA, 'cairo'), font_en: pick(t.font_en, FE, 'same'), font_head: pick(t.font_head, FH, 'same'), hw: pick(String(t.hw ?? 'auto'), ['auto', '200', '300', '400', '600', '700', '800', '900'], 'auto'),
+      hs: pick(t.hs, ['normal', 'outline', 'gradient', 'glow', 'shadow3d'], 'normal'), quality: pick(t.quality, ['auto', 'low', 'medium', 'high', 'very_high', 'premium', 'ultra', 'ultra_max', 'ultra_maximum'], 'auto'),
+      radius: n(t.radius, 0, 32, 12), scale: n(t.scale, 0.85, 1.25, 1), space: n(t.space, 0.75, 1.5, 1), glass: n(t.glass, 0.3, 1, 1), stroke: n(t.stroke, 1.25, 2.75, 2), motion: pick(t.motion, ['off', 'normal', 'strong'], 'normal'), mode: pick(t.mode, ['dark', 'light', 'auto'], 'dark') } };
 }
 const putSetting = (key, value) => ['insert into settings(key, value) values ($1, $2) on conflict (key) do update set value = excluded.value, updated_at = now()', [key, JSON.stringify(value)]];
 const DS_KEYS = ['design', 'private:design_draft', 'private:design_history', 'private:design_favs'];
@@ -486,6 +493,31 @@ export default function (add) {
     const st = ['read', 'closed', 'new'].includes(c.body?.status) ? c.body.status : fail(400, 'invalid_status');
     await c.db.one('update messages set status = $2 where id = $1', [bigId(c.params.id), st]);
     return { ok: true };
+  });
+
+  // ⚡ لوحة الأداء والمراقبة: قياسات الزوار الحقيقية (p75) + حالة الخوادم الحية + الأخطاء + الفخاخ
+  add('GET', '/admin/perf', 'admin', async (c) => {
+    await c.db.tx([["delete from perf_samples where at < now() - interval '30 days'", []], ["delete from client_errors where at < now() - interval '30 days'", []]]);
+    const P = (k) => `round(percentile_cont(0.75) within group (order by ${k}) filter (where ${k} > 0))::int as ${k}`;
+    const COLS = `count(*)::int as n, ${['lcp', 'fcp', 'inp', 'api_ms', 'db_ms', 'heap_mb'].map(P).join(', ')}, round(percentile_cont(0.75) within group (order by ttfb) filter (where ttfb is not null))::int as ttfb, round((percentile_cont(0.75) within group (order by cls) filter (where cls is not null))::numeric, 3)::float8 as cls`;
+    const W = "at > now() - interval '7 days'";
+    const [summary, byDevice, days, pages, errors, decoys] = await Promise.all([
+      c.db.one(`select ${COLS} from perf_samples where ${W}`),
+      c.db.all(`select device, mobile, ${COLS} from perf_samples where ${W} group by 1, 2 order by 1, 2`),
+      c.db.all(`select to_char(date_trunc('day', at), 'YYYY-MM-DD') as day, ${COLS} from perf_samples where at > now() - interval '14 days' group by 1 order by 1`),
+      c.db.all(`select page, ${COLS} from perf_samples where ${W} group by 1 order by lcp desc nulls last limit 8`),
+      c.db.all(`select msg, src, line, count(*)::int as n, max(at) as last from client_errors where ${W} group by 1, 2, 3 order by n desc limit 20`),
+      c.db.all(`select coalesce(detail->>'cat', kind) as cat, count(*)::int as n, count(distinct ip)::int as ips from security_events where kind in ('decoy_hit', 'decoy_canary') and created_at > now() - interval '7 days' group by 1 order by n desc`),
+    ]);
+    const lat = [];
+    for (let i = 0; i < 3; i++) { const t = performance.now(); await c.db.one('select 1 as x'); lat.push(performance.now() - t); }
+    let storage = null;
+    const probe = process.env.API_CODE_URL || (process.env.AWS_ENDPOINT_URL_S3 ? `${process.env.AWS_ENDPOINT_URL_S3.replace(/\/$/, '')}/media/` : '');
+    if (probe) { const t = performance.now(); try { const r = await fetch(probe, { method: 'HEAD' }); storage = { ok: r.status < 500, status: r.status, ms: Math.round(performance.now() - t) }; } catch { storage = { ok: false, ms: null }; } }
+    const mem = process.memoryUsage();
+    return { summary, byDevice, days, pages, errors,
+      decoys: { total: DECOY_COUNT, cats: Object.entries(CATS).map(([k, [label]]) => ({ k, label })), hits: decoys },
+      server: { db_ms: Math.round(lat.sort((a, b) => a - b)[1]), storage, rss_mb: Math.round(mem.rss / 1048576), heap_mb: Math.round(mem.heapUsed / 1048576), uptime_s: Math.round(process.uptime()), node: process.version, routes: c.routeStats() } };
   });
 
   add('GET', '/admin/design', 'admin', async (c) => dsState(c));
