@@ -71,6 +71,9 @@ export async function refreshMe() {
 export const isAdmin = () => ['admin', 'owner'].includes(state.me?.role);
 export const setTitle = (t) => { document.title = t ? `${t} | ${state.settings.site.name}` : `${state.settings.site.name} | ${state.settings.site.name_en || 'Anonymous Programmer'}`; };
 
+// كل شعارات الموقع (الرأس، القائمة الجانبية، الفوتر) تأخذ حركة الشعار المختارة — افتراضياً عملة 3D
+const brandMark = () => { const a = getContent(state).hero.logo_anim; return html`<span class="brand-mark ia-${a}" data-fx="${a}">${logo(state.settings.site.logo_url)}</span>`; };
+
 function navItems() {
   const sec = state.settings.site.sections || {}, c = getContent(state);
   const ic = { python: 'terminal', apk: 'phone', course: 'cap', video: 'play', file: 'folder' };
@@ -87,7 +90,7 @@ function renderHeader() {
   const ava = me ? (me.avatar ? html`<img class="avatar" src="${safeUrl(me.avatar)}" alt="" referrerpolicy="no-referrer">` : html`<span class="avatar">${(me.name || '?')[0]}</span>`) : '';
   mount(el, html`${s.announcement ? html`<div class="announce">${s.announcement}</div>` : ''}
   <div class="container">
-    <a class="brand" href="/" aria-label="الرئيسية"><span class="brand-mark ia-${getContent(state).hero.logo_anim}" data-fx="${getContent(state).hero.logo_anim}">${logo(s.logo_url)}</span><span>${s.name}<small>${s.name_en || 'Anonymous Programmer'}</small></span></a>
+    <a class="brand" href="/" aria-label="الرئيسية">${brandMark()}<span>${s.name}<small>${s.name_en || 'Anonymous Programmer'}</small></span></a>
     <nav class="nav" aria-label="التنقل الرئيسي">${navItems().map(([h, t]) => html`<a href="${h}">${t}</a>`)}</nav>
     <div class="hdr-actions">
       <button class="icon-btn" data-search aria-label="بحث">${icon('search')}</button>
@@ -99,7 +102,7 @@ function renderHeader() {
     </div>
   </div>
   <div class="container search-bar"><form data-sform class="row"><input class="input" name="q" placeholder="ابحث عن أداة، تطبيق، كورس..." autocomplete="off" maxlength="80"><button class="btn primary">${icon('search')}</button></form></div>`);
-  mount($('#drawer nav'), html`<a class="brand" href="/">${logo(s.logo_url)}<span>${s.name}</span></a><hr class="sep">
+  mount($('#drawer nav'), html`<a class="brand" href="/">${brandMark()}<span>${s.name}</span></a><hr class="sep">
     ${navItems().map(([h, t, i]) => html`<a href="${h}">${icon(i)} ${t}</a>`)}
     <a href="/latest">${icon('bolt')} أحدث المنتجات</a><a href="/top">${icon('trend')} الأكثر تحميلاً</a>
     <a href="/contact">${icon('chat')} التواصل والدعم</a><a href="/faq">${icon('help')} الأسئلة الشائعة</a>
@@ -114,7 +117,7 @@ function renderLayout() {
   <main id="view" tabindex="-1"></main>
   <footer class="ftr"><div class="container">
     <div class="cols">
-      <div><a class="brand" href="/">${logo(s.logo_url)}<span>${s.name}<small>${s.name_en || ''}</small></span></a><p class="muted small mt">${c.footer.about || s.tagline}</p>
+      <div><a class="brand" href="/">${brandMark()}<span>${s.name}<small>${s.name_en || ''}</small></span></a><p class="muted small mt">${c.footer.about || s.tagline}</p>
         <div class="socials">${socialLinks(so).map(([u, ic, t]) => html`<a class="icon-btn" href="${u}" target="_blank" rel="noopener" aria-label="${t}">${icon(ic)}</a>`)}</div></div>
       <div><h4>الأقسام</h4>${Object.keys(KINDS).filter((k) => s.sections?.[k] !== false).map((k) => html`<a href="${SECTIONS[k].path}">${c.sections[k].title}</a>`)}</div>
       <div><h4>المتجر</h4><a href="/latest">أحدث المنتجات</a><a href="/top">الأكثر تحميلاً</a><a href="/free">المنتجات المجانية</a><a href="/paid">المنتجات المدفوعة</a></div>

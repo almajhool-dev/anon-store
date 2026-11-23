@@ -12,7 +12,7 @@ const EXTRA = {
 };
 export const DEFAULT_CONTENT = {
   intro: { enabled: false, media_type: 'image', media_url: null, text: '', duration: 3, every_visit: false },
-  hero: { image_anim: 'coin', logo_anim: 'none',
+  hero: { image_anim: 'coin', logo_anim: 'coin',
     badge: 'متجر المبرمج المجهول', title: 'أدوات وتطبيقات وكورسات', highlight: 'للمبرمجين وعشاق الأمن السيبراني', subtitle: '',
     cta1_text: 'تصفّح المتجر', cta1_link: '/latest', cta2_text: 'المنتجات المجانية', cta2_link: '/free', image_url: null, show_terminal: true,
     terminal: ['$ anon-store --status', '[✓] تحميل آمن عبر روابط موقّعة ومؤقتة', '[✓] ملفات وفيديوهات بجودتها الأصلية', '[✓] رفع ملفات ضخمة قابل للاستكمال', '[✓] حماية ومراقبة أمنية مستمرة', '$ welcome --user guest'],

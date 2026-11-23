@@ -90,7 +90,7 @@ function settingInput(key, v) {
   if (key === 'content') {
     const h = v.hero || {}, show = v.show || {};
     return {
-      hero: { image_anim: ANIMS.includes(h.image_anim) ? h.image_anim : 'coin', logo_anim: ANIMS.includes(h.logo_anim) ? h.logo_anim : 'none', badge: txt(h.badge, 60), title: txt(h.title, 120), highlight: txt(h.highlight, 120), subtitle: txt(h.subtitle, 300),
+      hero: { image_anim: ANIMS.includes(h.image_anim) ? h.image_anim : 'coin', logo_anim: ANIMS.includes(h.logo_anim) ? h.logo_anim : 'coin', badge: txt(h.badge, 60), title: txt(h.title, 120), highlight: txt(h.highlight, 120), subtitle: txt(h.subtitle, 300),
         cta1_text: txt(h.cta1_text, 40), cta1_link: link(h.cta1_link), cta2_text: txt(h.cta2_text, 40), cta2_link: link(h.cta2_link),
         image_url: httpsUrl(h.image_url, 'image_url'), show_terminal: h.show_terminal !== false, terminal: list(h.terminal, 8, 'terminal').map((x) => txt(x, 90)) },
       sections: Object.fromEntries(SECTION_KEYS.map((k) => { const x = v.sections?.[k] || {}; return [k, { title: txt(x.title, 60), nav: txt(x.nav, 30), desc: txt(x.desc, 200), image_url: httpsUrl(x.image_url, 'image_url'), icon: ICONS.includes(x.icon) ? x.icon : null, anim: ANIMS.includes(x.anim) ? x.anim : 'none' }]; })),
