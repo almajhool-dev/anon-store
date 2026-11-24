@@ -330,6 +330,10 @@ body[data-mode="light"][data-lqglass="1"] :is(.adm-side, .drawer nav) > a { colo
 body[data-mode="light"][data-lqglass="1"] :is(.adm-side, .drawer nav) > a:hover { background: #fff; color: #0f172a; }
 body[data-mode="light"][data-lqrail="1"] .lq-rail-btn { border-color: var(--line-2); background: #fff; }
 
+/* 📦 خطوات تثبيت APK في صفحة المنتج */
+.apk-help summary { font-weight: 700; font-size: .92rem; }
+.apk-help ol { margin: 10px 0 0; padding-inline-start: 22px; display: grid; gap: 6px; color: var(--muted); line-height: 1.7; }
+
 /* شريط النسخة الجديدة */
 .upd-bar { position: fixed; z-index: 120; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; border-radius: 999px; background: #0b1020; color: #fff; border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 16px 40px rgba(0, 0, 0, .45); font-size: .9rem; max-width: calc(100vw - 24px); }
 .upd-bar button { border: 0; border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 800; background: var(--grad); color: #fff; cursor: pointer; }

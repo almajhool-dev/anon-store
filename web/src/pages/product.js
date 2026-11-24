@@ -24,6 +24,15 @@ export function startDownload(url) {
   document.body.append(a); a.click(); a.remove();
 }
 
+// ملفات APK: خطوات التثبيت وحل رسالة «الحزمة تبدو غير صالحة» (ملفات الموقع سليمة؛ السبب غالباً نسخة مثبّتة مسبقاً بتوقيع مختلف أو أحدث)
+const apkHelp = (f) => (/\.apk$/i.test(f.file_name || '') ? html`<details class="card pad mt apk-help"><summary>${icon('shield')} طريقة التثبيت وحل «الحزمة تبدو غير صالحة»</summary>
+  <ol class="small">
+    <li>انتظر اكتمال التحميل ثم افتح الملف من إشعار التنزيل أو من «الملفات ← التنزيلات».</li>
+    <li>إن طلب الهاتف ذلك، اسمح للمتصفح بـ«تثبيت التطبيقات غير المعروفة».</li>
+    <li>إن ظهرت «لم يتم تثبيت التطبيق لأن الحزمة تبدو غير صالحة»: التطبيق موجود على هاتفك بنسخة أحدث أو بتوقيع مختلف — احذف النسخة المثبّتة أولاً ثم ثبّت الملف من جديد (يُحذف معها ما حُفظ داخل الهاتف فقط).</li>
+    <li>حمّل من متصفح Chrome، لا من المتصفح الداخلي لتيك توك أو إنستغرام.</li>
+  </ol></details>` : '');
+
 export default async function (view, m, { state, go, setTitle, isAdmin }) {
   mount(view, loader());
   let d;
@@ -45,7 +54,7 @@ export default async function (view, m, { state, go, setTitle, isAdmin }) {
     let cta;
     if (me.access) {
       cta = html`${media ? html`<a class="btn primary block lg" href="/learn/${p.slug}">${icon('play')} ابدأ المشاهدة</a>` : ''}
-        ${current ? html`<button class="btn ${media ? '' : 'primary lg'} block" data-act="dl">${icon('download')} تحميل ${current.version ? 'الإصدار ' + current.version : ''}</button>` : (media ? '' : html`<p class="muted small mt">لم يُرفع ملف لهذا المنتج بعد.</p>`)}`;
+        ${current ? html`<button class="btn ${media ? '' : 'primary lg'} block" data-act="dl">${icon('download')} تحميل ${current.version ? 'الإصدار ' + current.version : ''}</button>${apkHelp(current)}` : (media ? '' : html`<p class="muted small mt">لم يُرفع ملف لهذا المنتج بعد.</p>`)}`;
     } else if (pend) {
       cta = html`<div class="card pad mt"><b>${icon('clock')} طلبك بانتظار تأكيد الدفع</b><p class="muted small">الرقم المرجعي: <span class="ltr">${me.purchase.reference}</span></p>
         <button class="btn primary block" data-act="buy">إكمال الدفع</button><button class="btn ghost block" data-act="cancel">إلغاء الطلب</button></div>`;
